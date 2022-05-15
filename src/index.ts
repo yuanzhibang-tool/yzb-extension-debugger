@@ -5,24 +5,50 @@ const { get, post } = server.router;
 const { fork } = require('child_process');
 
 class DebuggerLogger {
+  static withLog = false;
   static echoMessageTypeTitle(message: string) {
-    console.log(`\u001b[1;31m * ${message}`);
+    if (DebuggerLogger.withLog) {
+      console.log(`\u001b[1;31m * ${message}`);
+    }
   }
   static echoMessageInfoTitle(message: string) {
-    console.log(`\u001b[1;32m - ${message}`);
+    if (DebuggerLogger.withLog) {
+      console.log(`\u001b[1;32m - ${message}`);
+    }
   }
   static echoMessageDataTitle(message: string) {
-    console.log(`\u001b[1;33m $ ${message}`);
+    if (DebuggerLogger.withLog) {
+      console.log(`\u001b[1;33m $ ${message}`);
+    }
   }
   static echoMessageDeliver() {
-    console.log(`\u001b[1;35m -------------------------- *${Date()}* --------------------------`);
+    if (DebuggerLogger.withLog) {
+      console.log(`\u001b[1;35m -------------------------- *${Date()}* --------------------------`);
+    }
   }
   static echoRendererOtherMessage(message: any) {
-    DebuggerLogger.echoMessageDeliver();
-    DebuggerLogger.echoMessageTypeTitle('Sender not callback message to renderer');
-    DebuggerLogger.echoMessageDataTitle('callback data below');
-    console.log(message);
-    DebuggerLogger.echoMessageDeliver();
+    if (DebuggerLogger.withLog) {
+      DebuggerLogger.echoMessageDeliver();
+      DebuggerLogger.echoMessageTypeTitle('Sender not callback message to renderer');
+      DebuggerLogger.echoMessageDataTitle('callback data below');
+      console.log(message);
+      DebuggerLogger.echoMessageDeliver();
+    }
+  }
+  static table(data: any) {
+    if (DebuggerLogger.withLog) {
+      console.table(data);
+    }
+  }
+  static log(data: any) {
+    if (DebuggerLogger.withLog) {
+      console.log(data);
+    }
+  }
+  static error(data: any) {
+    if (DebuggerLogger.withLog) {
+      console.error(data);
+    }
   }
 }
 
@@ -34,6 +60,11 @@ class Debugger {
   messageIdentityIndex = 0;
   rendererTopicMessageCallback: ((topic: string, message: any) => {}) | null = null;
   rendererOtherMessageCallback: ((message: any) => {}) | null = null;
+  withLog = false;
+  constructor(withLog: boolean = false) {
+    this.withLog = withLog;
+    DebuggerLogger.withLog = withLog;
+  }
 
   setRendererTopicMessageCallback(callback: (topic: string, message: any) => {}) {
     this.rendererTopicMessageCallback = callback;
@@ -78,16 +109,17 @@ class Debugger {
           identity: messageIdentityString,
           topic,
         };
-        console.table(consoleMesssage);
+        DebuggerLogger.table(consoleMesssage);
         DebuggerLogger.echoMessageDataTitle('topic data below');
-        console.log(body);
+        DebuggerLogger.log(body);
         DebuggerLogger.echoMessageDeliver();
         this.sendMessageToProcess(message).then((result) => {
-          console.log(result);
+
+          DebuggerLogger.log(result);
         }).catch((error) => {
-          console.error(error);
+          DebuggerLogger.error(error);
         }).finally(() => {
-          console.log('finally');
+          DebuggerLogger.log('finally');
         });
         return 'ok';
       })
@@ -114,9 +146,9 @@ class Debugger {
                     type: 'next/then',
                     identity: messageIdentity,
                   };
-                  console.table(consoleData);
+                  DebuggerLogger.table(consoleData);
                   DebuggerLogger.echoMessageDataTitle('callback data below');
-                  console.log(data);
+                  DebuggerLogger.log(data);
                   DebuggerLogger.echoMessageDeliver();
                   if (this.nextCallbackMap.has(messageIdentity)) {
                     const callback = this.nextCallbackMap.get(messageIdentity);
@@ -138,9 +170,9 @@ class Debugger {
                     type: 'error',
                     identity: messageIdentity,
                   };
-                  console.table(consoleData);
+                  DebuggerLogger.table(consoleData);
                   DebuggerLogger.echoMessageDataTitle('callback data below');
-                  console.log(data);
+                  DebuggerLogger.log(data);
                   DebuggerLogger.echoMessageDeliver();
                   if (this.errorCallbackMap.has(messageIdentity)) {
                     const callback = this.errorCallbackMap.get(messageIdentity);
@@ -165,9 +197,9 @@ class Debugger {
               type: 'topic message to renderer',
               topic: message.topic,
             };
-            console.table(consoleData);
+            DebuggerLogger.table(consoleData);
             DebuggerLogger.echoMessageDataTitle('topic data below');
-            console.log(message.data);
+            DebuggerLogger.log(message.data);
             DebuggerLogger.echoMessageDeliver();
             if (this.rendererTopicMessageCallback) {
               this.rendererTopicMessageCallback(message.topic, message.data);
@@ -190,4 +222,4 @@ class Debugger {
 }
 
 
-export const extensionDebugger = new Debugger();
+export const extensionDebugger = new Debugger(false);
