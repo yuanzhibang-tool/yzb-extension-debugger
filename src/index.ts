@@ -4,7 +4,7 @@ const server = require('server');
 const { get, post } = server.router;
 const { fork } = require('child_process');
 
-class DebuggerLogger {
+export class DebuggerLogger {
   static withLog = false;
   static echoMessageTypeTitle(message: string) {
     if (DebuggerLogger.withLog) {
@@ -52,7 +52,7 @@ class DebuggerLogger {
   }
 }
 
-class Debugger {
+export class Debugger {
   nextCallbackMap = new Map();
   errorCallbackMap = new Map();
   extensionProcess: ChildProcess | null = null;
