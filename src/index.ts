@@ -6,6 +6,10 @@ const { fork } = require('child_process');
 
 export class DebuggerLogger {
   static withLog = false;
+
+  static setWithLog(withLog: boolean) {
+    DebuggerLogger.withLog = withLog;
+  }
   static echoMessageTypeTitle(message: string) {
     if (DebuggerLogger.withLog) {
       console.log(`\u001b[1;31m * ${message}`);
