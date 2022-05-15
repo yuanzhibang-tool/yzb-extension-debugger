@@ -32,6 +32,16 @@ class Debugger {
   extensionProcess: ChildProcess | null = null;
   // 用来生成identity系数,identity为自增状态
   messageIdentityIndex = 0;
+  rendererTopicMessageCallback: ((topic: string, message: any) => {}) | null = null;
+  rendererOtherMessageCallback: ((message: any) => {}) | null = null;
+
+  setRendererTopicMessageCallback(callback: (topic: string, message: any) => {}) {
+    this.rendererTopicMessageCallback = callback;
+  }
+
+  setRendererOtherMessageCallback(callback: (message: any) => {}) {
+    this.rendererOtherMessageCallback = callback;
+  }
 
   sendMessageToProcess(message) {
     return new Promise((resolve, reject) => {
@@ -159,11 +169,20 @@ class Debugger {
             DebuggerLogger.echoMessageDataTitle('topic data below');
             console.log(message.data);
             DebuggerLogger.echoMessageDeliver();
+            if (this.rendererTopicMessageCallback) {
+              this.rendererTopicMessageCallback(message.topic, message.data);
+            }
           } else {
             DebuggerLogger.echoRendererOtherMessage(message);
+            if (this.rendererOtherMessageCallback) {
+              this.rendererOtherMessageCallback(message);
+            }
           }
         } else {
           DebuggerLogger.echoRendererOtherMessage(message);
+          if (this.rendererOtherMessageCallback) {
+            this.rendererOtherMessageCallback(message);
+          }
         }
       }
     });
