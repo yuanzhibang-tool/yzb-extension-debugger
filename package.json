@@ -31,5 +31,8 @@
       "require": "./commonjs/index.js",
       "types": "./es6/index.d.ts"
     }
+  },
+  "dependencies": {
+    "tslint": "^6.1.3"
   }
 }
