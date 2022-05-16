@@ -247,6 +247,7 @@ describe('Debugger check', () => {
     });
 
     test('check runExtension on message', () => {
+        expect.assertions(5);
         const instance = new Debugger();
         instance.extensionProcess = new MockProcess() as any;
         instance.runExtension(null);
@@ -254,11 +255,46 @@ describe('Debugger check', () => {
         const testTopic = 'test-topic';
         const testTopicMessage = { k1: 'v1' };
         const messageData = { topic: testTopic, message: testTopicMessage };
-        const expectMessage = {
+        const testResultData = { r1: 'v1' };
+        const testErrorData = { e1: 'v1' };
+        const nextMessage = {
             __type: 'yzb_ipc_node_message',
             identity,
-            data: messageData,
+            type: 'next',
+            data: testResultData,
         };
+        instance.nextCallbackMap.set(identity, (result: any) => {
+            expect(result).toEqual(testResultData);
+        });
+        (instance.extensionProcess as any).messageCallback(nextMessage);
+
+        const errorMessage = {
+            __type: 'yzb_ipc_node_message',
+            identity,
+            type: 'error',
+            data: testErrorData,
+        };
+        instance.errorCallbackMap.set(identity, (error: any) => {
+            expect(error).toEqual(testErrorData);
+        });
+        (instance.extensionProcess as any).messageCallback(errorMessage);
+
+        const topicMessage = {
+            __type: 'yzb_ipc_renderer_message',
+            topic: messageData.topic,
+            message: messageData.message,
+        };
+        instance.setRendererTopicMessageCallback((topic: string, message: any) => {
+            expect(topic).toEqual(messageData.topic);
+            expect(message).toEqual(messageData.message);
+        });
+        (instance.extensionProcess as any).messageCallback(topicMessage);
+
+        const otherMessage = testTopicMessage;
+        instance.setRendererOtherMessageCallback((message: any) => {
+            expect(message).toEqual(otherMessage);
+        });
+        (instance.extensionProcess as any).messageCallback(otherMessage);
 
     });
 });
