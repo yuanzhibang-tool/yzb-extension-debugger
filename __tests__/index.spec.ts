@@ -2,9 +2,15 @@ import { } from 'jest';
 import { DebuggerLogger, Debugger } from '../src/index';
 
 class MockProcess {
+    messageCallback: ((message: any) => void) | null = null;
     message: any;
     send(message: any) {
         this.message = message;
+    }
+    on(messageType: string, callback: (message: any) => void) {
+        if (messageType === 'message') {
+            this.messageCallback = callback;
+        }
     }
 }
 
@@ -238,5 +244,21 @@ describe('Debugger check', () => {
         const identity = instance.nextCallbackMap.keys().next().value;
         const storeErrorCallback = instance.nextCallbackMap.get(identity);
         storeErrorCallback(testResultData);
+    });
+
+    test('check runExtension on message', () => {
+        const instance = new Debugger();
+        instance.extensionProcess = new MockProcess() as any;
+        instance.runExtension(null);
+        const identity = '123456';
+        const testTopic = 'test-topic';
+        const testTopicMessage = { k1: 'v1' };
+        const messageData = { topic: testTopic, message: testTopicMessage };
+        const expectMessage = {
+            __type: 'yzb_ipc_node_message',
+            identity,
+            data: messageData,
+        };
+
     });
 });
