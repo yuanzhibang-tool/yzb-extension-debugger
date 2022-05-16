@@ -173,8 +173,10 @@ export class Debugger {
       })
     ]);
   }
-  runExtension(extensionPath: string) {
-    this.extensionProcess = fork(extensionPath);
+  runExtension(extensionPath: string | null) {
+    if (extensionPath) {
+      this.extensionProcess = fork(extensionPath);
+    }
     this.extensionProcess?.on('message', (message: any) => {
       if (message !== null && typeof message === 'object') {
         if (message.hasOwnProperty('__type')) {
