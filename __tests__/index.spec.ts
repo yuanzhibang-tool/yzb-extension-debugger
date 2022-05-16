@@ -54,6 +54,18 @@ describe('Debugger check', () => {
 
     });
 
+    test('check clearIdentityCallback', () => {
+        const dg = new Debugger();
+        const testIdentity = '123456';
+        dg.nextCallbackMap.set(testIdentity, () => { });
+        dg.errorCallbackMap.set(testIdentity, () => { });
+        dg.completeCallbackMap.set(testIdentity, () => { });
+        dg.clearIdentityCallback(testIdentity);
+        expect(dg.nextCallbackMap.size).toEqual(0);
+        expect(dg.errorCallbackMap.size).toEqual(0);
+        expect(dg.completeCallbackMap.size).toEqual(0);
+    });
+
     test('check sendMessageToProcess', () => {
         expect.assertions(6);
         const dg = new Debugger();
