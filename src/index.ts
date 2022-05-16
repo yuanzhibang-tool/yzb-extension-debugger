@@ -81,6 +81,12 @@ export class Debugger {
     this.rendererOtherMessageCallback = callback;
   }
 
+  clearIdentityCallback(identity: string) {
+    this.nextCallbackMap.delete(identity);
+    this.errorCallbackMap.delete(identity);
+    this.completeCallbackMap.delete(identity);
+  }
+
   sendMessageToProcess(message) {
     DebuggerLogger.echoMessageDeliver();
     DebuggerLogger.echoMessageTypeTitle('Recieve message from renderer');
@@ -203,13 +209,11 @@ export class Debugger {
                   if (this.nextCallbackMap.has(messageIdentity)) {
                     const callback = this.nextCallbackMap.get(messageIdentity);
                     if (!callback) {
-                      this.nextCallbackMap.delete(messageIdentity);
+                      this.clearIdentityCallback(messageIdentity);
                       return;
                     }
                     callback(data);
-                    this.nextCallbackMap.delete(messageIdentity);
-                    this.errorCallbackMap.delete(messageIdentity);
-                    this.completeCallbackMap.delete(messageIdentity);
+                    this.clearIdentityCallback(messageIdentity);
                   }
                 }
                 break;
@@ -229,13 +233,11 @@ export class Debugger {
                   if (this.errorCallbackMap.has(messageIdentity)) {
                     const callback = this.errorCallbackMap.get(messageIdentity);
                     if (!callback) {
-                      this.errorCallbackMap.delete(messageIdentity);
+                      this.clearIdentityCallback(messageIdentity);
                       return;
                     }
                     callback(data);
-                    this.nextCallbackMap.delete(messageIdentity);
-                    this.errorCallbackMap.delete(messageIdentity);
-                    this.completeCallbackMap.delete(messageIdentity);
+                    this.clearIdentityCallback(messageIdentity);
                   }
                 }
                 break;
