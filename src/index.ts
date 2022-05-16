@@ -98,6 +98,30 @@ export class Debugger {
     });
   }
 
+  // 模拟yzb-renderer worker send方法
+  send(topic: string, topicData: any, nextCallback: any, errorCallbck: any, completeCallback: any) {
+    const message = this.getTopicProcessMessage(topic, topicData);
+    this.sendMessageToProcess(message).then((result: any) => {
+      if (nextCallback) {
+        nextCallback(result);
+      }
+    }).catch((error: any) => {
+      if (errorCallbck) {
+        nextCallback(error);
+      }
+    }).finally(() => {
+      if (completeCallback) {
+        completeCallback();
+      }
+    });
+  }
+
+  // 模拟yzb-renderer worker promiseSend方法
+  promiseSend(topic: string, topicData: any) {
+    const message = this.getTopicProcessMessage(topic, topicData);
+    return this.sendMessageToProcess(message);
+  }
+
   private getTopicProcessMessage(topic: string, topicData: any) {
     this.messageIdentityIndex++;
     const messageIdentityString = `identity-${this.messageIdentityIndex}`;
