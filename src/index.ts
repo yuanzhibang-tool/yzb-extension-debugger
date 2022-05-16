@@ -1,5 +1,4 @@
 import { ChildProcess } from 'child_process';
-
 const server = require('server');
 const { get, post } = server.router;
 const { fork } = require('child_process');
@@ -61,22 +60,24 @@ export class DebuggerLogger {
 export class Debugger {
   nextCallbackMap = new Map();
   errorCallbackMap = new Map();
+  completeCallbackMap = new Map();
+
   extensionProcess: ChildProcess | null = null;
   // 用来生成identity系数,identity为自增状态
   messageIdentityIndex = 0;
-  rendererTopicMessageCallback: ((topic: string, message: any) => {}) | null = null;
-  rendererOtherMessageCallback: ((message: any) => {}) | null = null;
+  rendererTopicMessageCallback: ((topic: string, message: any) => void) | null = null;
+  rendererOtherMessageCallback: ((message: any) => void) | null = null;
   withLog = false;
   constructor(withLog: boolean = true) {
     this.withLog = withLog;
     DebuggerLogger.withLog = withLog;
   }
 
-  setRendererTopicMessageCallback(callback: (topic: string, message: any) => {}) {
+  setRendererTopicMessageCallback(callback: (topic: string, message: any) => void) {
     this.rendererTopicMessageCallback = callback;
   }
 
-  setRendererOtherMessageCallback(callback: (message: any) => {}) {
+  setRendererOtherMessageCallback(callback: (message: any) => void) {
     this.rendererOtherMessageCallback = callback;
   }
 
@@ -90,7 +91,7 @@ export class Debugger {
     };
     DebuggerLogger.table(consoleMesssage);
     DebuggerLogger.echoMessageDataTitle('topic data below');
-    DebuggerLogger.log(message.data.data);
+    DebuggerLogger.log(message.data.message);
     DebuggerLogger.echoMessageDeliver();
     return new Promise((resolve, reject) => {
       const identity = message.identity;
@@ -101,15 +102,15 @@ export class Debugger {
   }
 
   // 模拟yzb-renderer worker send方法
-  send(topic: string, topicData: any, nextCallback: any, errorCallbck: any, completeCallback: any) {
-    const message = this.getTopicProcessMessage(topic, topicData);
+  send(topic: string, topicMessage: any, nextCallback: any, errorCallbck: any, completeCallback: any) {
+    const message = this.getTopicProcessMessage(topic, topicMessage);
     this.sendMessageToProcess(message).then((result: any) => {
       if (nextCallback) {
         nextCallback(result);
       }
     }).catch((error: any) => {
       if (errorCallbck) {
-        nextCallback(error);
+        errorCallbck(error);
       }
     }).finally(() => {
       if (completeCallback) {
@@ -118,13 +119,13 @@ export class Debugger {
     });
   }
 
-  // 模拟yzb-renderer worker promiseSend方法
-  promiseSend(topic: string, topicData: any) {
-    const message = this.getTopicProcessMessage(topic, topicData);
+  // 模拟yzb-renderer worker sendPromise方法
+  sendPromise(topic: string, topicMessage: any) {
+    const message = this.getTopicProcessMessage(topic, topicMessage);
     return this.sendMessageToProcess(message);
   }
 
-  private getTopicProcessMessage(topic: string, topicData: any) {
+  getTopicProcessMessage(topic: string, topicMessage: any) {
     this.messageIdentityIndex++;
     const messageIdentityString = `identity-${this.messageIdentityIndex}`;
     const message = {
@@ -132,7 +133,7 @@ export class Debugger {
       identity: messageIdentityString,
       data: {
         topic,
-        data: topicData
+        message: topicMessage
       }
     };
     return message;
@@ -246,10 +247,10 @@ export class Debugger {
             };
             DebuggerLogger.table(consoleData);
             DebuggerLogger.echoMessageDataTitle('topic data below');
-            DebuggerLogger.log(message.data);
+            DebuggerLogger.log(message.message);
             DebuggerLogger.echoMessageDeliver();
             if (this.rendererTopicMessageCallback) {
-              this.rendererTopicMessageCallback(message.topic, message.data);
+              this.rendererTopicMessageCallback(message.topic, message.message);
             }
           } else {
             DebuggerLogger.echoRendererOtherMessage(message);
@@ -269,4 +270,4 @@ export class Debugger {
 }
 
 
-export const extensionDebugger = new Debugger(false);
+export const extensionDebugger = new Debugger(true);
