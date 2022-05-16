@@ -5,9 +5,9 @@ const { get, post } = server.router;
 const { fork } = require('child_process');
 
 export class DebuggerLogger {
-  static withLog = false;
+  static withLog = true;
 
-  static setWithLog(withLog: boolean) {
+  static setWithLog(withLog: boolean = true) {
     DebuggerLogger.withLog = withLog;
   }
   static echoMessageTypeTitle(message: string) {
@@ -65,7 +65,7 @@ export class Debugger {
   rendererTopicMessageCallback: ((topic: string, message: any) => {}) | null = null;
   rendererOtherMessageCallback: ((message: any) => {}) | null = null;
   withLog = false;
-  constructor(withLog: boolean = false) {
+  constructor(withLog: boolean = true) {
     this.withLog = withLog;
     DebuggerLogger.withLog = withLog;
   }
@@ -79,12 +79,37 @@ export class Debugger {
   }
 
   sendMessageToProcess(message) {
+    DebuggerLogger.echoMessageDeliver();
+    DebuggerLogger.echoMessageTypeTitle('Recieve message from renderer');
+    DebuggerLogger.echoMessageInfoTitle('message info below');
+    const consoleMesssage = {
+      identity: message.identity,
+      topic: message.data.topic,
+    };
+    DebuggerLogger.table(consoleMesssage);
+    DebuggerLogger.echoMessageDataTitle('topic data below');
+    DebuggerLogger.log(message.data.data);
+    DebuggerLogger.echoMessageDeliver();
     return new Promise((resolve, reject) => {
       const identity = message.identity;
       this.nextCallbackMap.set(identity, resolve);
       this.errorCallbackMap.set(identity, reject);
       this.extensionProcess?.send(message);
     });
+  }
+
+  private getTopicProcessMessage(topic: string, topicData: any) {
+    this.messageIdentityIndex++;
+    const messageIdentityString = `identity-${this.messageIdentityIndex}`;
+    const message = {
+      __type: 'yzb_ipc_node_message',
+      identity: messageIdentityString,
+      data: {
+        topic,
+        data: topicData
+      }
+    };
+    return message;
   }
 
   startServer(port: number = 8888) {
@@ -96,29 +121,8 @@ export class Debugger {
         const url = ctx.url;
         const body = ctx.body;
         const topic = url.slice(1);
-        this.messageIdentityIndex++;
-        const messageIdentityString = `identity-${this.messageIdentityIndex}`;
-        const message = {
-          __type: 'yzb_ipc_node_message',
-          identity: messageIdentityString,
-          data: {
-            topic,
-            data: body
-          }
-        };
-        DebuggerLogger.echoMessageDeliver();
-        DebuggerLogger.echoMessageTypeTitle('Recieve message from renderer');
-        DebuggerLogger.echoMessageInfoTitle('message info below');
-        const consoleMesssage = {
-          identity: messageIdentityString,
-          topic,
-        };
-        DebuggerLogger.table(consoleMesssage);
-        DebuggerLogger.echoMessageDataTitle('topic data below');
-        DebuggerLogger.log(body);
-        DebuggerLogger.echoMessageDeliver();
+        const message = this.getTopicProcessMessage(topic, body);
         this.sendMessageToProcess(message).then((result) => {
-
           DebuggerLogger.log(result);
         }).catch((error) => {
           DebuggerLogger.error(error);
