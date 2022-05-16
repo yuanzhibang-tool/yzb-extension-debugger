@@ -27,7 +27,7 @@ export class DebuggerLogger {
   }
   static echoMessageDeliver() {
     if (DebuggerLogger.withLog) {
-      console.log(`\u001b[1;35m -------------------------- *${Date()}* --------------------------`);
+      console.log(`\u001b[1;35m ------- *${Date()}* -------`);
     }
   }
   static echoRendererOtherMessage(message: any) {
