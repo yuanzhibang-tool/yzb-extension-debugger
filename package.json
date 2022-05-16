@@ -11,7 +11,7 @@
     "prod": "tsc -p tsconfig-commonjs.json ; tsc -p tsconfig-es6.json",
     "prepublish-npm": "rm -rf dist ; npm run prod ; cp package.json dist/package.json ; mkdir -p dist/view ; cp src/debug.html dist/view/debug.html",
     "publish-npm": "cd dist ; npm publish --access public --registry https://registry.npmjs.com",
-    "release": "npm version patch; npm run publish-npm"
+    "release": "./script/release.sh"
   },
   "repository": {
     "type": "git",
