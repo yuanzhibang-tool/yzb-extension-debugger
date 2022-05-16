@@ -206,6 +206,8 @@ export class Debugger {
                     }
                     callback(data);
                     this.nextCallbackMap.delete(messageIdentity);
+                    this.errorCallbackMap.delete(messageIdentity);
+                    this.completeCallbackMap.delete(messageIdentity);
                   }
                 }
                 break;
@@ -229,7 +231,9 @@ export class Debugger {
                       return;
                     }
                     callback(data);
+                    this.nextCallbackMap.delete(messageIdentity);
                     this.errorCallbackMap.delete(messageIdentity);
+                    this.completeCallbackMap.delete(messageIdentity);
                   }
                 }
                 break;

@@ -101,12 +101,23 @@ describe('Debugger check', () => {
     });
 
     test('check send', () => {
-        const nextCallback = (result: any) => { };
-        const errorCallback = (error: any) => { };
-        const completeCallback = () => { };
+        expect.assertions(4);
+
         const testTopic = 'test-topic';
         const exeName = 'test-exe-name';
         const testTopicMessage = { k1: 'v1' };
+        const testResultData = { r1: 'v1' };
+        const testErrorData = { e1: 'v1' };
+        const nextCallback = (result: any) => {
+            expect(result).toEqual(testResultData);
+        };
+        const errorCallback = (error: any) => {
+            expect(error).toEqual(testErrorData);
+        };
+
+        const completeCallback = () => {
+            expect(true).toEqual(true);
+        };
 
         const data = {
             data: {
@@ -123,8 +134,14 @@ describe('Debugger check', () => {
         const instance = new Debugger();
         instance.send(testTopic, testTopicMessage, nextCallback, errorCallback, completeCallback);
         const identity = instance.nextCallbackMap.keys().next().value;
-        expect(instance.nextCallbackMap.get(identity)).toEqual(nextCallback);
-        expect(instance.errorCallbackMap.get(identity)).toEqual(errorCallback);
+        const storeNextCallback = instance.nextCallbackMap.get(identity);
+        storeNextCallback(testResultData);
+
+        instance.send(testTopic, testTopicMessage, nextCallback, errorCallback, completeCallback);
+        const identity1 = instance.errorCallbackMap.keys().next().value;
+        const storeErrorCallback = instance.errorCallbackMap.get(identity1);
+        storeErrorCallback(testErrorData);
+
     });
 
     test('check sendPromise', () => {
