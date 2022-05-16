@@ -100,8 +100,8 @@ describe('Debugger check', () => {
         expect(topicProcessMessage).toEqual(message);
     });
 
-    test('check send', () => {
-        expect.assertions(4);
+    test('check send next', () => {
+        expect.assertions(2);
 
         const testTopic = 'test-topic';
         const exeName = 'test-exe-name';
@@ -118,7 +118,6 @@ describe('Debugger check', () => {
         const completeCallback = () => {
             expect(true).toEqual(true);
         };
-
         const data = {
             data: {
                 process_name: exeName,
@@ -136,6 +135,39 @@ describe('Debugger check', () => {
         const identity = instance.nextCallbackMap.keys().next().value;
         const storeNextCallback = instance.nextCallbackMap.get(identity);
         storeNextCallback(testResultData);
+    });
+
+    test('check send error', () => {
+        expect.assertions(2);
+
+        const testTopic = 'test-topic';
+        const exeName = 'test-exe-name';
+        const testTopicMessage = { k1: 'v1' };
+        const testResultData = { r1: 'v1' };
+        const testErrorData = { e1: 'v1' };
+        const nextCallback = (result: any) => {
+            expect(result).toEqual(testResultData);
+        };
+        const errorCallback = (error: any) => {
+            expect(error).toEqual(testErrorData);
+        };
+
+        const completeCallback = () => {
+            expect(true).toEqual(true);
+        };
+        const data = {
+            data: {
+                process_name: exeName,
+                message: {
+                    topic: testTopic,
+                    data: testTopicMessage
+                },
+            },
+            next: nextCallback,
+            error: errorCallback,
+            complete: completeCallback
+        };
+        const instance = new Debugger();
 
         instance.send(testTopic, testTopicMessage, nextCallback, errorCallback, completeCallback);
         const identity1 = instance.errorCallbackMap.keys().next().value;
@@ -144,8 +176,8 @@ describe('Debugger check', () => {
 
     });
 
-    test('check sendPromise', () => {
-        expect.assertions(4);
+    test('check sendPromise next', () => {
+        expect.assertions(2);
         const testTopic = 'test-topic';
         const exeName = 'test-exe-name';
         const testTopicMessage = { k1: 'v1' };
@@ -172,9 +204,39 @@ describe('Debugger check', () => {
         const instance = new Debugger();
         instance.sendPromise(testTopic, testTopicMessage).then(nextCallback).catch(errorCallback).finally(completeCallback);
         const identity = instance.nextCallbackMap.keys().next().value;
-        instance.nextCallbackMap.get(identity)(testResultData);
-        instance.sendPromise(testTopic, testTopicMessage).then(nextCallback).catch(errorCallback).finally(completeCallback);
-        instance.errorCallbackMap.get(identity)(testResultData);
+        const storeNextCallback = instance.nextCallbackMap.get(identity);
+        storeNextCallback(testResultData);
     });
 
+    test('check sendPromise error', () => {
+        expect.assertions(2);
+        const testTopic = 'test-topic';
+        const exeName = 'test-exe-name';
+        const testTopicMessage = { k1: 'v1' };
+        const testResultData = { r1: 'v1' };
+        const testErrorData = { e1: 'v1' };
+        const nextCallback = (result: any) => {
+            expect(result).toEqual(testResultData);
+        };
+        const errorCallback = (error: any) => {
+            expect(error).toEqual(testErrorData);
+        };
+        const completeCallback = () => {
+            expect(true).toEqual(true);
+        };
+        const data = {
+            data: {
+                process_name: exeName,
+                message: {
+                    topic: testTopic,
+                    data: testTopicMessage
+                },
+            }
+        };
+        const instance = new Debugger();
+        instance.sendPromise(testTopic, testTopicMessage).then(nextCallback).catch(errorCallback).finally(completeCallback);
+        const identity = instance.nextCallbackMap.keys().next().value;
+        const storeErrorCallback = instance.nextCallbackMap.get(identity);
+        storeErrorCallback(testResultData);
+    });
 });
