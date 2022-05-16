@@ -3,6 +3,8 @@ import { ChildProcess } from 'child_process';
 const server = require('server');
 const { get, post } = server.router;
 const { fork } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 export class DebuggerLogger {
   static withLog = true;
@@ -137,9 +139,22 @@ export class Debugger {
   }
 
   startServer(port: number = 8888) {
+    DebuggerLogger.echoMessageDeliver();
+    DebuggerLogger.echoMessageInfoTitle('Debug server start successfully!');
+    DebuggerLogger.echoMessageInfoTitle('server info below');
+    const consoleData = {
+      port,
+      simple_debug_tool_url: `http://localhost:${port}`
+    };
+    DebuggerLogger.table(consoleData);
+    DebuggerLogger.echoMessageDeliver();
+
     server({ port, security: { csrf: false } }, [
       get('/', ctx => {
-        return 'Hello world';
+        const viewPath = path.resolve(__dirname, '../view/debug.html');
+        const content = fs.readFileSync(viewPath, 'utf8');
+        ctx.res.setHeader('Content-Type', 'text/html');
+        return content;
       }),
       post('/*', ctx => {
         const url = ctx.url;
