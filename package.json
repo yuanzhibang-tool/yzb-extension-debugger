@@ -1,6 +1,6 @@
 {
   "name": "@yuanzhibang/extension-debugger",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "猿之棒拓展调试工具，主要用于网络模拟renderer进程通信,以及单元测试",
   "main": "commonjs/index.js",
   "module": "es6/index.js",
@@ -9,7 +9,7 @@
     "build": "tsc",
     "test": "jest --runInBand --env=node --colors --coverage test",
     "prod": "tsc -p tsconfig-commonjs.json ; tsc -p tsconfig-es6.json",
-    "prepublish-npm": "rm -rf dist ; npm run prod ; cp package.json dist/package.json ; mkdir -p dist/view ; cp src/debug.html dist/view/debug.html ; cp LICENSE dist/LICENSE ; cp NOTICE dist/NOTICE ;",
+    "prepublish-npm": "rm -rf dist ; npm run prod ; cp package.json dist/package.json ; mkdir -p dist/view ; cp src/debug.html dist/view/debug.html ; cp LICENSE dist/LICENSE ; cp NOTICE dist/NOTICE ; cp README.md dist/README.md ;",
     "publish-npm": "cd dist ; npm publish --access public --registry https://registry.npmjs.com",
     "release": "./script/release.sh"
   },
