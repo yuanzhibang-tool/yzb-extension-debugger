@@ -87,7 +87,7 @@ export class Debugger {
     this.completeCallbackMap.delete(identity);
   }
 
-  sendMessageToProcess(message) {
+  sendMessageToProcess(message: any) {
     DebuggerLogger.echoMessageDeliver();
     DebuggerLogger.echoMessageTypeTitle('Recieve message from renderer');
     DebuggerLogger.echoMessageInfoTitle('message info below');
@@ -99,7 +99,7 @@ export class Debugger {
     DebuggerLogger.echoMessageDataTitle('topic data below');
     DebuggerLogger.log(message.data.message);
     DebuggerLogger.echoMessageDeliver();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject): any => {
       const identity = message.identity;
       this.nextCallbackMap.set(identity, resolve);
       this.errorCallbackMap.set(identity, reject);
@@ -108,7 +108,8 @@ export class Debugger {
   }
 
   // 模拟yzb-renderer worker send方法
-  send(topic: string, topicMessage: any, nextCallback: any, errorCallbck: any, completeCallback: any) {
+  // tslint:disable-next-line: max-line-length
+  send(topic: string, topicMessage: any, nextCallback: (result: any) => void, errorCallbck: (error: any) => void, completeCallback: () => void) {
     const message = this.getTopicProcessMessage(topic, topicMessage);
     this.sendMessageToProcess(message).then((result: any) => {
       if (nextCallback) {
@@ -179,6 +180,7 @@ export class Debugger {
       })
     ]);
   }
+  // extensionPath为null为了便于进行单元测试
   runExtension(extensionPath: string | null) {
     if (extensionPath) {
       this.extensionProcess = fork(extensionPath);
