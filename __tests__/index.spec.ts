@@ -1,4 +1,3 @@
-import { } from 'jest';
 import { DebuggerLogger, Debugger } from '../src/index';
 
 class MockProcess {
