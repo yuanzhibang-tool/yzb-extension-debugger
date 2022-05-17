@@ -17,7 +17,7 @@
     "type": "git",
     "url": "https://github.com/yuanzhibang-tool/extension-debugger.git"
   },
-  "author": "",
+  "author": "yuanzhibang.com",
   "license": "Apache License 2.0",
   "devDependencies": {
     "@types/jest": "^27.5.1",
