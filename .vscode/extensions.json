@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-tslint-plugin",
+    "formulahendry.code-runner",
+    "gruntfuggly.todo-tree",
+    "tabnine.tabnine-vscode",
+    "gitlab.gitlab-workflow",
+    "GitHub.vscode-pull-request-github"
+  ]
+}

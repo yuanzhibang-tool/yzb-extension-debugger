@@ -1,0 +1,39 @@
+{
+  "name": "@yuanzhibang/extension-debugger",
+  "version": "0.0.13",
+  "description": "猿之棒拓展调试工具，主要用于网络模拟renderer进程通信,以及单元测试",
+  "main": "commonjs/index.js",
+  "module": "es6/index.js",
+  "types": "es6/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest --runInBand --env=node --colors --coverage test",
+    "prod": "tsc -p tsconfig-commonjs.json ; tsc -p tsconfig-es6.json",
+    "prepublish-npm": "rm -rf dist ; npm run prod ; cp package.json dist/package.json ; mkdir -p dist/view ; cp src/debug.html dist/view/debug.html ; cp LICENSE dist/LICENSE ; cp NOTICE dist/NOTICE ;",
+    "publish-npm": "cd dist ; npm publish --access public --registry https://registry.npmjs.com",
+    "release": "./script/release.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuanzhibang-tool/extension-debugger.git"
+  },
+  "author": "",
+  "license": "Apache License 2.0",
+  "devDependencies": {
+    "@types/jest": "^27.5.1",
+    "@types/node": "^17.0.33",
+    "ts-jest": "^28.0.2",
+    "ts-lint": "^4.5.1",
+    "typescript": "^4.6.4"
+  },
+  "exports": {
+    ".": {
+      "import": "./es6/index.js",
+      "require": "./commonjs/index.js",
+      "types": "./es6/index.d.ts"
+    }
+  },
+  "dependencies": {
+    "server": "^1.0.37"
+  }
+}
