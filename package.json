@@ -34,6 +34,7 @@
     }
   },
   "dependencies": {
-    "server": "^1.0.37"
+    "server": "^1.0.37",
+    "ts-node": "^10.7.0"
   }
 }

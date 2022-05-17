@@ -183,7 +183,12 @@ export class Debugger {
   // extensionPath为null为了便于进行单元测试
   runExtension(extensionPath: string | null) {
     if (extensionPath) {
-      this.extensionProcess = fork(extensionPath);
+      // 支持ts,判断后缀
+      if (extensionPath.endsWith('.ts')) {
+        this.extensionProcess = fork(extensionPath, ['-r', 'ts-node/register']);
+      } else {
+        this.extensionProcess = fork(extensionPath);
+      }
     }
     this.extensionProcess?.on('message', (message: any) => {
       if (message !== null && typeof message === 'object') {
