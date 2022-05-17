@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.david-health.cn/yuanzhibang/yzb-extension-debugger.git"
+    "url": "https://github.com/yuanzhibang-tool/extension-debugger.git"
   },
   "author": "",
   "license": "Apache License 2.0",
