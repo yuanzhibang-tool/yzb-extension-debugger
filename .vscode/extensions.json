@@ -5,6 +5,7 @@
     "formulahendry.code-runner",
     "gruntfuggly.todo-tree",
     "tabnine.tabnine-vscode",
-    "GitLab.gitlab-workflow"
+    "gitlab.gitlab-workflow",
+    "GitHub.vscode-pull-request-github"
   ]
 }
