@@ -27,7 +27,7 @@ describe('DebuggerLogger check', () => {
 
 describe('Debugger check', () => {
     test('check constructor', () => {
-        const dg = new Debugger(false);
+        const dg = new Debugger();
         expect(dg.withLog).toEqual(true);
         expect(DebuggerLogger.withLog).toEqual(true);
         const dg1 = new Debugger(false);
