@@ -18,7 +18,7 @@
     "url": "https://gitlab.david-health.cn/yuanzhibang/yzb-extension-debugger.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "Apache License 2.0",
   "devDependencies": {
     "@types/jest": "^27.5.1",
     "@types/node": "^17.0.33",
