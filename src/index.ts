@@ -99,7 +99,7 @@ export class Debugger {
     DebuggerLogger.echoMessageDataTitle('topic data below');
     DebuggerLogger.log(message.data.message);
     DebuggerLogger.echoMessageDeliver();
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject): any => {
       const identity = message.identity;
       this.nextCallbackMap.set(identity, resolve);
       this.errorCallbackMap.set(identity, reject);
