@@ -1,4 +1,3 @@
-import { } from 'jest';
 import { DebuggerLogger, Debugger } from '../src/index';
 
 class MockProcess {
@@ -39,7 +38,7 @@ describe('Debugger check', () => {
     });
 
     test('check setRendererTopicMessageCallback', () => {
-        const dg = new Debugger();
+        const dg = new Debugger(false);
         const callback = (topic: string, message: any) => { };
         dg.setRendererTopicMessageCallback(callback);
         expect(dg.rendererTopicMessageCallback).toEqual(callback);
@@ -47,7 +46,7 @@ describe('Debugger check', () => {
     });
 
     test('check setRendererOtherMessageCallback', () => {
-        const dg = new Debugger();
+        const dg = new Debugger(false);
         const callback = (message: any) => { };
         dg.setRendererOtherMessageCallback(callback);
         expect(dg.rendererOtherMessageCallback).toEqual(callback);
@@ -55,7 +54,7 @@ describe('Debugger check', () => {
     });
 
     test('check clearIdentityCallback', () => {
-        const dg = new Debugger();
+        const dg = new Debugger(false);
         const testIdentity = '123456';
         dg.nextCallbackMap.set(testIdentity, () => { });
         dg.errorCallbackMap.set(testIdentity, () => { });
@@ -68,7 +67,7 @@ describe('Debugger check', () => {
 
     test('check sendMessageToProcess', () => {
         expect.assertions(6);
-        const dg = new Debugger();
+        const dg = new Debugger(false);
         dg.extensionProcess = new MockProcess() as any;
         const identity = '123456';
         const testMessage = {
@@ -101,7 +100,7 @@ describe('Debugger check', () => {
     });
 
     test('check getTopicProcessMessage', () => {
-        const dg = new Debugger();
+        const dg = new Debugger(false);
         const testTopic = 'test-topic';
         const topicMessage = { t1: 'v1' };
         const messageIdentityIndex = dg.messageIdentityIndex + 1;
@@ -148,7 +147,7 @@ describe('Debugger check', () => {
             error: errorCallback,
             complete: completeCallback
         };
-        const instance = new Debugger();
+        const instance = new Debugger(false);
         instance.send(testTopic, testTopicMessage, nextCallback, errorCallback, completeCallback);
         const identity = instance.nextCallbackMap.keys().next().value;
         const storeNextCallback = instance.nextCallbackMap.get(identity);
@@ -185,7 +184,7 @@ describe('Debugger check', () => {
             error: errorCallback,
             complete: completeCallback
         };
-        const instance = new Debugger();
+        const instance = new Debugger(false);
 
         instance.send(testTopic, testTopicMessage, nextCallback, errorCallback, completeCallback);
         const identity1 = instance.errorCallbackMap.keys().next().value;
@@ -219,7 +218,7 @@ describe('Debugger check', () => {
                 },
             }
         };
-        const instance = new Debugger();
+        const instance = new Debugger(false);
         instance.sendPromise(testTopic, testTopicMessage).then(nextCallback).catch(errorCallback).finally(completeCallback);
         const identity = instance.nextCallbackMap.keys().next().value;
         const storeNextCallback = instance.nextCallbackMap.get(identity);
@@ -251,7 +250,7 @@ describe('Debugger check', () => {
                 },
             }
         };
-        const instance = new Debugger();
+        const instance = new Debugger(false);
         instance.sendPromise(testTopic, testTopicMessage).then(nextCallback).catch(errorCallback).finally(completeCallback);
         const identity = instance.nextCallbackMap.keys().next().value;
         const storeErrorCallback = instance.nextCallbackMap.get(identity);
@@ -260,7 +259,7 @@ describe('Debugger check', () => {
 
     test('check runExtension on message', () => {
         expect.assertions(5);
-        const instance = new Debugger();
+        const instance = new Debugger(false);
         instance.extensionProcess = new MockProcess() as any;
         instance.runExtension(null);
         const identity = '123456';
