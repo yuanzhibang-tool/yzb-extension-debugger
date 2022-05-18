@@ -39,7 +39,6 @@ export class DebuggerLogger {
       DebuggerLogger.echoMessageTypeTitle('Sender not callback message to renderer');
       DebuggerLogger.echoMessageDataTitle('callback data below');
       console.log(message);
-      DebuggerLogger.echoMessageDeliver();
     }
   }
   static table(data: any) {
