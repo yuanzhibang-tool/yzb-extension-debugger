@@ -166,8 +166,9 @@
                 resultEle.innerText = '';
                 timeEle.innerText = '';
                 ajax(topic, topicData).then(function (result) {
-                    var callbackType = result.type;
-                    var callbackData = result.data;
+                    const resultObject = JSON.parse(result);
+                    var callbackType = resultObject.type;
+                    var callbackData = resultObject.data;
                     console.log(`------- *${Date()}* -------`);
                     console.log(`callback type: ${callbackType}`);
                     console.log(`callback data below:`);
