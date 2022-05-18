@@ -162,7 +162,7 @@ export class Debugger {
         let viewPath = path.resolve(__dirname, '../view/debug.html');
         if (htmlPath) {
           if (htmlPath.startsWith('/')) {
-            // 此为绝对路径
+            // 此为绝对路径,仅支持linux和darwin平台,win平台暂不处理
             viewPath = htmlPath;
           } else {
             viewPath = path.resolve(__dirname, htmlPath);
