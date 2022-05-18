@@ -5,15 +5,190 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>simple debug tool</title>
+    <title>猿之棒拓展简单调试工具</title>
+    <style type="text/css">
+        *{
+            padding: 0;
+            margin: 0;
+        }
+        .header-content{
+            margin: auto;
+            height: 50px;
+            line-height: 50px;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .header-content span, .content, .result-content{
+            display: block;
+            padding: 0 25px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .content {
+            padding-top: 15px;
+            overflow: hidden;
+            padding-bottom: 15px;
+        }
+        .content input, .content textarea{
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            font-variant: tabular-nums;
+            list-style: none;
+            font-feature-settings: "tnum","tnum";
+            padding: 4px 11px;
+            color: #000000d9;
+            font-size: 14px;
+            line-height: 1.5715;
+            background-color: #fff;
+            background-image: none;
+            border: 1px solid #d9d9d9;
+            border-radius: 2px;
+            transition: all .3s;
+            margin: 10px 0;
+        }
+        .content input:focus, .content textarea:focus{
+            border-color: #40a9ff;
+            box-shadow: 0 0 0 2px #1890ff33;
+            border-right-width: 1px !important;
+            outline: 0;
+        }
+        .content textarea{
+            display: block;
+            width: 100%;
+            line-height: initial;
+        }
+        .content button{
+            width: 110px;
+            height: 32px;
+            float: right;
+            cursor: pointer;
+            border: none;
+            border-radius: 3px;
+            font-size: 14px;
+            background-color: #1890ff;
+            color: #fff;
+            transition: all 0.3s;
+        }
+        .content button:hover {
+            color: #fff;
+            background: #40a9ff;
+        }
+        .content button:active {
+            background-color: #096dd9;
+        }
+        .result-content .box{
+            min-height: 50px;
+            background-color: #f3f3f3;
+            border-radius: 3px;
+            padding: 10px;
+            font-size: 14px;
+            color: rgb(0, 94, 255);
+            position: relative;
+        }
+        .box-header{
+            padding-bottom: 8px;
+            font-size: 14px;
+            color: #999;
+        }
+        #time {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+        }
+    </style>
 </head>
 
 <body>
-    <form action="" method="post">
-        <input type="text" name="topic" id="topic">
-        <textarea name="topic-data" id="topic-data" cols="30" rows="10"></textarea>
-        <input type="submit" value="">
-    </form>
+    <div class="container">
+        <div class="header-content">
+            <span>猿之棒拓展简单调试工具</span>
+        </div>
+        <div class="content">
+            <input type="text" name="topic" id="topic" placeholder="Topic">
+            <textarea name="topic-message" id="topic-message" cols="30" rows="10" placeholder="Topic message (JSON)"></textarea>
+            <button id="submit-button">提交</button>
+        </div>
+        <div class="result-content">
+            <div class="box-header">返回结果内容如下:</div>
+            <div class="box">
+                <div id="result"></div>
+                <div id="time"></div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        // 处理textarea点击tab添加空格
+        var textarea = document.getElementById('topic-message');
+        textarea.addEventListener('keydown',function(e){
+            if(e.keyCode == 9){
+                e.preventDefault();
+                var indent = '    ';
+                var start = this.selectionStart;
+                var end = this.selectionEnd;
+                var selected = window.getSelection().toString();
+                selected = indent + selected.replace(/g/, '' + indent);
+                this.value = this.value.substring(0,start) + selected + this.value.substring(end);
+                this.setSelectionRange(start + indent.length, start + selected.length);
+            }
+        });
+
+        // submit
+        var submitButton = document.getElementById('submit-button');
+        submitButton.onclick = function(){
+            var topic = document.getElementById('topic').value;
+            var topicData = document.getElementById('topic-message').value;
+            if (!topic) {
+                alert('请输入topic');
+            } else if (!topicData) {
+                alert('请输入请输入 topic message');
+            } else {
+                var resultEle = document.getElementById('result');
+                var timeEle = document.getElementById('time');
+                resultEle.innerText = '';
+                timeEle.innerText = '';
+                ajax(topic, topicData).then(function (result) {
+                    resultEle.innerText = result;
+                    timeEle.innerText = getCurrentDate(new Date());
+                }).catch(function (){
+                    resultEle.innerText = '错误，请查证后重试!';
+                });
+            }
+        };
+
+        function ajax(url, postData) {
+            return new Promise(function(resolve, reject) {
+                var ajaxObj = new XMLHttpRequest();
+                ajaxObj.open('POST', url, true);
+                ajaxObj.setRequestHeader('Content-type', 'application/json');
+                ajaxObj.timeout = 100000;
+                ajaxObj.send(postData);
+                ajaxObj.onreadystatechange = function () {
+                    if(ajaxObj.readyState === 4){
+                        if (ajaxObj.status === 200) {
+                            resolve(ajaxObj.response);
+                        } else {
+                            reject();
+                        }
+                    }
+                };
+            });
+        }
+
+        function getCurrentDate(date, format = 'yyyy-MM-dd HH:mm:ss') {
+            var pad =  function(n){
+                return n < 10 ? `0${n}` : n.toString();
+            };
+            return format
+            .replace('yyyy', date.getFullYear())
+            .replace('MM', pad(date.getMonth() + 1))
+            .replace('dd', pad(date.getDate()))
+            .replace('HH', pad(date.getHours()))
+            .replace('mm', pad(date.getMinutes()))
+            .replace('ss', pad(date.getSeconds()));
+        }
+    </script>
 </body>
 
 </html>
