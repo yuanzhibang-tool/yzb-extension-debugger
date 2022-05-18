@@ -161,7 +161,12 @@ export class Debugger {
       get('/', ctx => {
         let viewPath = path.resolve(__dirname, '../view/debug.html');
         if (htmlPath) {
-          viewPath = path.resolve(__dirname, htmlPath);
+          if (htmlPath.startsWith('/')) {
+            // 此为绝对路径
+            viewPath = htmlPath;
+          } else {
+            viewPath = path.resolve(__dirname, htmlPath);
+          }
         }
         const content = fs.readFileSync(viewPath, 'utf8');
         ctx.res.setHeader('Content-Type', 'text/html');
