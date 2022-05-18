@@ -146,7 +146,7 @@ export class Debugger {
     return message;
   }
 
-  startServer(port: number = 8888) {
+  startServer(port: number = 8888, htmlPath: string | null = null) {
     DebuggerLogger.echoMessageDeliver();
     DebuggerLogger.echoMessageInfoTitle('Debug server start successfully!');
     DebuggerLogger.echoMessageInfoTitle('server info below');
@@ -159,7 +159,10 @@ export class Debugger {
 
     server({ port, security: { csrf: false } }, [
       get('/', ctx => {
-        const viewPath = path.resolve(__dirname, '../view/debug.html');
+        let viewPath = path.resolve(__dirname, '../view/debug.html');
+        if (htmlPath) {
+          viewPath = path.resolve(__dirname, htmlPath);
+        }
         const content = fs.readFileSync(viewPath, 'utf8');
         ctx.res.setHeader('Content-Type', 'text/html');
         return content;
