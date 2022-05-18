@@ -169,9 +169,10 @@
                     const resultObject = JSON.parse(result);
                     var callbackType = resultObject.type;
                     var callbackData = resultObject.data;
-                    console.log(`------- *${Date()}* -------`);
-                    console.log(`callback type: ${callbackType}`);
-                    console.log(`callback data below:`);
+                    console.log(`\u001b[1;35m ------- *${Date()}* ------- \u001b[0m`);
+                    console.log(`\u001b[1;31m * Recieve callback from node \u001b[0m`);
+                    console.log(`\u001b[1;32m * callback type: ${callbackType} \u001b[0m`);
+                    console.log(`\u001b[1;33m * callback data below: \u001b[0m`);
                     console.log(callbackData);
                     resultEle.innerText = "收到回调结果,请在调试控制台查看.";
                     timeEle.innerText = getCurrentDate(new Date());
