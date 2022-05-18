@@ -166,7 +166,13 @@
                 resultEle.innerText = '';
                 timeEle.innerText = '';
                 ajax(topic, topicData).then(function (result) {
-                    resultEle.innerText = result;
+                    var callbackType = result.type;
+                    var callbackData = result.data;
+                    console.log(`------- *${Date()}* -------`);
+                    console.log(`callback type: ${callbackType}`);
+                    console.log(`callback data below:`);
+                    console.log(callbackData);
+                    resultEle.innerText = "收到回调结果,请在调试控制台查看.";
                     timeEle.innerText = getCurrentDate(new Date());
                 }).catch(function () {
                     resultEle.innerText = '错误，请查证后重试!';

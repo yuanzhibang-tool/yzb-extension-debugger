@@ -1,6 +1,8 @@
 import { ChildProcess } from 'child_process';
 const server = require('server');
 const { get, post } = server.router;
+const { json } = require('server/reply');
+
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -13,22 +15,22 @@ export class DebuggerLogger {
   }
   static echoMessageTypeTitle(message: string) {
     if (DebuggerLogger.withLog) {
-      console.log(`\u001b[1;31m * ${message}`);
+      console.log(`\u001b[1;31m * ${message} \u001b[0m`);
     }
   }
   static echoMessageInfoTitle(message: string) {
     if (DebuggerLogger.withLog) {
-      console.log(`\u001b[1;32m - ${message}`);
+      console.log(`\u001b[1;32m - ${message} \u001b[0m`);
     }
   }
   static echoMessageDataTitle(message: string) {
     if (DebuggerLogger.withLog) {
-      console.log(`\u001b[1;33m $ ${message}`);
+      console.log(`\u001b[1;33m $ ${message} \u001b[0m`);
     }
   }
   static echoMessageDeliver() {
     if (DebuggerLogger.withLog) {
-      console.log(`\u001b[1;35m ------- *${Date()}* -------`);
+      console.log(`\u001b[1;35m ------- *${Date()}* ------- \u001b[0m`);
     }
   }
   static echoRendererOtherMessage(message: any) {
@@ -172,19 +174,27 @@ export class Debugger {
         ctx.res.setHeader('Content-Type', 'text/html');
         return content;
       }),
-      post('/*', ctx => {
+      post('/*', async ctx => {
         const url = ctx.url;
         const body = ctx.body;
         const topic = url.slice(1);
         const message = this.getTopicProcessMessage(topic, body);
-        this.sendMessageToProcess(message).then((result) => {
+        try {
+          const result = await this.sendMessageToProcess(message);
           DebuggerLogger.log(result);
-        }).catch((error) => {
+          const resultData = {
+            type: 'next/then',
+            data: result
+          };
+          return json(resultData);
+        } catch (error) {
           DebuggerLogger.error(error);
-        }).finally(() => {
-          DebuggerLogger.log('finally');
-        });
-        return 'ok';
+          const errorData = {
+            type: 'error',
+            data: error
+          };
+          return json(errorData);
+        }
       })
     ]);
   }
