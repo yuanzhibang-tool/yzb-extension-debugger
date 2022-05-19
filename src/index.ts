@@ -2,37 +2,68 @@ import { ChildProcess } from 'child_process';
 const server = require('server');
 const { get, post } = server.router;
 const { json } = require('server/reply');
-
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+
+/**
+ * 调试器日志打印类
+ */
 export class DebuggerLogger {
+
+  /**
+   * With log of debugger logger
+   */
   static withLog = true;
 
+
+  /**
+   * 设置打印开关
+   * @param [withLog] 
+   */
   static setWithLog(withLog: boolean = true) {
     DebuggerLogger.withLog = withLog;
   }
+  /**
+   * 内部方法无需关注,输出消息title
+   * @param message 消息内容
+   */
   static echoMessageTypeTitle(message: string) {
     if (DebuggerLogger.withLog) {
       console.log(`\u001b[1;31m * ${message} \u001b[0m`);
     }
   }
+  /**
+   * 内部方法无需关注,输出消息的信息title
+   * @param message 消息内容
+   */
   static echoMessageInfoTitle(message: string) {
     if (DebuggerLogger.withLog) {
       console.log(`\u001b[1;32m - ${message} \u001b[0m`);
     }
   }
+  /**
+   * 内部方法无需关注,输出消息的数据title
+   * @param message 消息内容
+   */
   static echoMessageDataTitle(message: string) {
     if (DebuggerLogger.withLog) {
       console.log(`\u001b[1;33m $ ${message} \u001b[0m`);
     }
   }
+  /**
+   * 内部方法无需关注,输出分割线
+   */
   static echoMessageDeliver() {
     if (DebuggerLogger.withLog) {
       console.log(`\u001b[1;35m ------- *${Date()}* ------- \u001b[0m`);
     }
   }
+  /**
+   * 内部方法无需关注,输出非回调消息
+   * @param message 消息体
+   */
   static echoRendererOtherMessage(message: any) {
     if (DebuggerLogger.withLog) {
       DebuggerLogger.echoMessageDeliver();
@@ -41,16 +72,30 @@ export class DebuggerLogger {
       console.log(message);
     }
   }
+  /**
+   * 内部方法无需关注,封装console.table
+   * @param data 打印数据
+   */
   static table(data: any) {
     if (DebuggerLogger.withLog) {
       console.table(data);
     }
   }
+
+  /**
+   * 内部方法无需关注,封装console.log
+   * @param data 打印数据
+   */
   static log(data: any) {
     if (DebuggerLogger.withLog) {
       console.log(data);
     }
   }
+
+  /**
+   * 内部方法无需关注,封装console.error
+   * @param data 打印数据
+   */
   static error(data: any) {
     if (DebuggerLogger.withLog) {
       console.error(data);
@@ -58,36 +103,90 @@ export class DebuggerLogger {
   }
 }
 
-export class Debugger {
-  nextCallbackMap = new Map();
-  errorCallbackMap = new Map();
-  completeCallbackMap = new Map();
 
+/**
+ * 拓展进程调试器主体类
+ */
+export class Debugger {
+
+  /**
+   * 内部变量无需关注,next/then结果回调保存map
+   */
+  nextCallbackMap = new Map<string, (result: any) => void>();
+
+  /**
+   * 内部变量无需关注,error错误回调保存map
+   */
+  errorCallbackMap = new Map<string, (error: any) => void>();
+
+  /**
+   * 内部变量无需关注,complete/finally结束回调保存map
+   */
+  completeCallbackMap = new Map<string, () => void>();
+
+  /**
+   * 内部变量无需关注,拓展进程的实例
+   */
   extensionProcess: ChildProcess | null = null;
-  // 用来生成identity系数,identity为自增状态
+
+  /**
+   * 内部变量无需关注,用来模拟消息identity的生成系数,identity为自增状态
+   */
   messageIdentityIndex = 0;
+
+  /**
+   * 内部变量无需关注,模拟渲染端topic消息回调
+   */
   rendererTopicMessageCallback: ((topic: string, message: any) => void) | null = null;
+
+  /**
+   * 内部变量无需关注,模拟渲染端除了topic消息以外的其他消息回调
+   */
   rendererOtherMessageCallback: ((message: any) => void) | null = null;
-  withLog = false;
+  /**
+   * 是否打开日志,默认为true
+   */
+  withLog = true;
+
+  /**
+   * 创建类实例
+   * @param [withLog] 是否打印调试日志,默认为true
+   */
   constructor(withLog: boolean = true) {
     this.withLog = withLog;
     DebuggerLogger.withLog = withLog;
   }
 
+  /**
+   * 设置模拟渲染端topic消息回调
+   * @param callback 消息的回调
+   */
   setRendererTopicMessageCallback(callback: (topic: string, message: any) => void) {
     this.rendererTopicMessageCallback = callback;
   }
 
+  /**
+   * 设置模拟渲染端除了topic消息以外的其他消息回调
+   * @param callback 消息的回调
+   */
   setRendererOtherMessageCallback(callback: (message: any) => void) {
     this.rendererOtherMessageCallback = callback;
   }
-
+  /**
+   * 内部方法无需关注,清空identity下的各类回调
+   * @param identity 消息的identity
+   */
   clearIdentityCallback(identity: string) {
     this.nextCallbackMap.delete(identity);
     this.errorCallbackMap.delete(identity);
     this.completeCallbackMap.delete(identity);
   }
 
+  /**
+   * 内部方法无需关注,向进程发送topic消息
+   * @param message 消息体
+   * @returns 发送消息的promise
+   */
   sendMessageToProcess(message: any) {
     DebuggerLogger.echoMessageDeliver();
     DebuggerLogger.echoMessageTypeTitle('Recieve message from renderer');
@@ -107,10 +206,16 @@ export class Debugger {
       this.extensionProcess?.send(message);
     });
   }
-
-  // 模拟yzb-renderer worker send方法
+  /**
+   * 模拟渲染进程发送topic消息,和@yuanzhibang/node中的IpcRendererWorker的send方法
+   * @param topic 消息topic
+   * @param topicMessage topic消息的消息体
+   * @param nextCallback next/then结果回调
+   * @param errorCallbck error错误回调
+   * @param completeCallback 结束回调
+   */
   // tslint:disable-next-line: max-line-length
-  send(topic: string, topicMessage: any, nextCallback: (result: any) => void, errorCallbck: (error: any) => void, completeCallback: () => void) {
+  send(topic: string, topicMessage: any, nextCallback: (result: any) => void, errorCallbck: (error: any) => void, completeCallback: () => void): void {
     const message = this.getTopicProcessMessage(topic, topicMessage);
     this.sendMessageToProcess(message).then((result: any) => {
       if (nextCallback) {
@@ -127,13 +232,24 @@ export class Debugger {
     });
   }
 
-  // 模拟yzb-renderer worker sendPromise方法
-  sendPromise(topic: string, topicMessage: any) {
+  /**
+   * 模拟渲染进程发送topic消息,和@yuanzhibang/node中的IpcRendererWorker的sendPromise方法
+   * @param topic 消息topic
+   * @param topicMessage topic消息的消息体
+   * @returns 返回发送消息的promise
+   */
+  sendPromise(topic: string, topicMessage: any): Promise<any> {
     const message = this.getTopicProcessMessage(topic, topicMessage);
     return this.sendMessageToProcess(message);
   }
 
-  getTopicProcessMessage(topic: string, topicMessage: any) {
+  /**
+   * 内部方法无需关注,获取topic消息消息体
+   * @param topic 消息topic
+   * @param topicMessage topic消息的消息体
+   * @returns 返回消息体
+   */
+  getTopicProcessMessage(topic: string, topicMessage: any): any {
     this.messageIdentityIndex++;
     const messageIdentityString = `identity-${this.messageIdentityIndex}`;
     const message = {
@@ -147,7 +263,12 @@ export class Debugger {
     return message;
   }
 
-  startServer(port: number = 8888, htmlPath: string | null = null) {
+  /**
+   * 启动调试服务器
+   * @param [port] 启动调试服务器的端口号
+   * @param [htmlPath] 无需关注,开发本项目使用,用来调试的html网页
+   */
+  startServer(port: number = 8888, htmlPath: string | null = null): void {
     DebuggerLogger.echoMessageDeliver();
     DebuggerLogger.echoMessageInfoTitle('Debug server start successfully!');
     DebuggerLogger.echoMessageInfoTitle('server info below');
@@ -157,7 +278,6 @@ export class Debugger {
     };
     DebuggerLogger.table(consoleData);
     DebuggerLogger.echoMessageDeliver();
-
     server({ port, security: { csrf: false } }, [
       get('/', ctx => {
         let viewPath = path.resolve(__dirname, '../view/debug.html');
@@ -197,8 +317,11 @@ export class Debugger {
       })
     ]);
   }
-  // extensionPath为null为了便于进行单元测试
-  runExtension(extensionPath: string | null) {
+  /**
+   * 根据js或者ts路径运行拓展进程
+   * @param extensionPath js或者ts的入口文件地址,null为了便于进行单元测试
+   */
+  runExtension(extensionPath: string | null): void {
     if (extensionPath) {
       // 支持ts,判断后缀
       if (extensionPath.endsWith('.ts')) {
@@ -300,6 +423,5 @@ export class Debugger {
     });
   }
 }
-
 
 export const extensionDebugger = new Debugger(true);
