@@ -13,14 +13,14 @@ const path = require('path');
 export class DebuggerLogger {
 
   /**
-   * With log of debugger logger
+   * 静态变量,控制打印日志,默认为true
    */
   static withLog = true;
 
 
   /**
    * 设置打印开关
-   * @param [withLog] 
+   * @param [withLog] 是否打印日志,默认为true
    */
   static setWithLog(withLog: boolean = true) {
     DebuggerLogger.withLog = withLog;
