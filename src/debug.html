@@ -279,8 +279,8 @@
 
         function getHistoryList(callback) {
             exeSql("SELECT * FROM extension_debugger_history ORDER BY id DESC LIMIT 20", [], (result) => {
-                // !删除大于20条的内容
-                const max = 2;
+                // !删除大于50条的内容
+                const max = 50;
                 if (result.rows.length > 1) {
                     const lastItem = result.rows[0];
                     const lastId = lastItem.id + 1 - max;
