@@ -7,6 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://static.yuanzhibang.com/app/yuanzhibang/image/icon/icon.png?x-oss-process=image/resize,w_60"
         rel="shortcut icon" type="image/x-icon">
+    <link href="https://static.yuanzhibang.com/common/js/josdejong-jsoneditor/v9.7.4/jsoneditor.min.css"
+        rel="stylesheet" type="text/css">
+    <script src="https://static.yuanzhibang.com/common/js/josdejong-jsoneditor/v9.7.4/jsoneditor.min.js"></script>
     <title>猿之棒拓展简单调试工具</title>
     <style type="text/css">
         * {
@@ -119,6 +122,7 @@
 </head>
 
 <body>
+    <div id="jsoneditor" style="width: 400px; height: 400px;"></div>
     <div class="container">
         <div class="header-content">
             <span>猿之棒拓展简单调试工具</span>
@@ -215,6 +219,80 @@
                 .replace('mm', pad(date.getMinutes()))
                 .replace('ss', pad(date.getSeconds()));
         }
+
+        const container = document.getElementById("jsoneditor")
+        const options = {}
+        const editor = new JSONEditor(container, options)
+
+        // set json
+        const initialJson = {
+            "Array": [1, 2, 3],
+            "Boolean": true,
+            "Null": null,
+            "Number": 123,
+            "Object": { "a": "b", "c": "d" },
+            "String": "Hello World"
+        }
+        editor.set(initialJson)
+        // get json
+        const updatedJson = editor.get()
+
+        function getDb() {
+            var db = openDatabase('yzb-extension-debugger', '1.0', 'record the yzb-extension-debugger info', 2 * 1024 * 1024);
+            return db;
+        }
+
+        function exeSql(sql, values = [], result_callback, error_callback) {
+            const db = getDb();
+            const add_time = Math.round((new Date()).getTime() / 1000);
+            db.transaction((tx) => {
+                tx.executeSql(sql,
+                    values,
+                    (tx, result) => {
+                        if (result_callback) {
+                            result_callback(result);
+                        }
+                    },
+                    (tx, error) => {
+                        if (error_callback) {
+                            error_callback(error);
+                        }
+                    })
+            });
+        }
+
+        function initDb() {
+            exeSql('CREATE TABLE IF NOT EXISTS extension_debugger_history (id integer primary key autoincrement, topic,topic_message,add_time int)');
+        }
+
+        function insert(topic, topic_message) {
+            const add_time = Math.round((new Date()).getTime() / 1000);
+            exeSql('INSERT INTO  extension_debugger_history (topic, topic_message, add_time) VALUES (?, ?,?)', [topic, topic_message, add_time]);
+        }
+
+        function deleteHistory(id) {
+            exeSql(`DELETE FROM extension_debugger_history WHERE id =${id};`);
+        }
+        function emptyHistory() {
+            exeSql("DELETE FROM extension_debugger_history");
+        }
+
+        function getHistoryList(callback) {
+            exeSql("SELECT * FROM extension_debugger_history ORDER BY id DESC LIMIT 20", [], (result) => {
+                // !删除大于20条的内容
+                const max = 2;
+                if (result.rows.length > 1) {
+                    const lastItem = result.rows[0];
+                    const lastId = lastItem.id + 1 - max;
+                    if (lastId > 0) {
+                        exeSql(`DELETE FROM extension_debugger_history WHERE id < ${lastId};`);
+                    }
+                }
+                callback(result.rows);
+            });
+        }
+        initDb();
+    </script>
     </script>
 </body>
 
