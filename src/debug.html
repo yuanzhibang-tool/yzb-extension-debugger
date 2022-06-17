@@ -25,14 +25,17 @@
             font-size: 16px;
             font-weight: bold;
         }
-        .header-content div{
+
+        .header-content div {
             max-width: 1000px;
             min-width: 800px;
         }
-        .version{
+
+        .version {
             font-weight: normal;
             font-size: 14px;
         }
+
         .header-content div,
         .content,
         .result-content {
@@ -51,13 +54,15 @@
             padding-right: 340px;
             box-sizing: border-box;
         }
-        .send-message-history{
+
+        .send-message-history {
             position: absolute;
             right: 25px;
             top: 15px;
-            width: 300px;   
+            width: 300px;
         }
-        .send-message-history{
+
+        .send-message-history {
             width: 300px;
             max-width: 300px;
             margin-left: 15px;
@@ -67,6 +72,7 @@
             box-sizing: border-box;
             overflow: hidden;
         }
+
         .send-message-history .title {
             line-height: 30px;
             padding: 0 10px;
@@ -77,6 +83,7 @@
             overflow: hidden;
             user-select: none;
         }
+
         .send-message-history .title span {
             float: right;
             cursor: pointer;
@@ -84,10 +91,11 @@
             opacity: 0.6;
             transition: all 0.3s;
         }
-        .send-message-history .title span:hover{
+
+        .send-message-history .title span:hover {
             opacity: 1;
         }
-     
+
         .content input {
             display: block;
             width: 100%;
@@ -135,10 +143,12 @@
         .content #submit-button:active {
             background-color: #096dd9;
         }
-        .result-content{
+
+        .result-content {
             padding: 0 !important;
             margin-top: 50px;
         }
+
         .result-content .box {
             min-height: 50px;
             background-color: #f3f3f3;
@@ -160,53 +170,65 @@
             right: 10px;
             top: 10px;
         }
-        #jsoneditor{
+
+        #jsoneditor {
             height: 400px;
             padding-bottom: 15px;
         }
-        .message-item{
+
+        .message-item {
             padding: 10px;
             font-size: 13px;
             border-bottom: 1px solid #eee;
         }
+
         .message-item .add-time {
             font-size: 12px;
             color: #aaa;
         }
-        .message-topic{
+
+        .message-topic {
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
         }
-        .message-data{
+
+        .message-data {
             background-color: #f3f3f3;
             padding: 5px;
             border-radius: 5px;
             margin-top: 5px;
         }
-        pre{
+
+        pre {
             overflow-x: auto;
         }
-        .history-message-list{
+
+        .history-message-list {
             height: 572px;
             overflow: auto;
         }
-        .tool{
+
+        .tool {
             float: right;
             display: flex;
             align-items: center;
         }
+
         .tool span {
             user-select: none;
             cursor: pointer;
             margin-right: 10px;
         }
-        .tool span:last-child{
+
+        .tool span:last-child {
             margin-right: 0;
         }
+
         .tool span:hover {
             color: rgb(0, 115, 255);
         }
+
         .tool span:last-child:hover {
             color: rgb(255, 50, 50);
         }
@@ -234,14 +256,14 @@
                     </div>
                 </div>
             </div>
-          
+
             <div class="send-message-history">
                 <div class="title">
                     提交历史
                     <span onclick="emptyHistoryMessageList()">清空</span>
                 </div>
                 <div class="history-message-list">
-                   <!-- 历史发送记录 -->
+                    <!-- 历史发送记录 -->
                 </div>
             </div>
         </div>
@@ -265,8 +287,8 @@
 
         // 获取发送历史
         function initSendHistoryList() {
-            getHistoryList(function(listData){
-                const getHtml = function(data) {
+            getHistoryList(function (listData) {
+                const getHtml = function (data) {
                     var htmlStr = `<div class="message-item ${'message-item-' + data.id}">
                                         <div class="add-time">
                                             ${getCurrentDate(new Date(data.add_time * 1000))}
@@ -277,7 +299,7 @@
                                         </div>
                                         <div class="message-topic">Topic: ${data.topic}</div>
                                         <div class="message-data">
-                                            <pre>${JSON.stringify(JSON.parse(data.topic_message), null, 4) }</pre>
+                                            <pre>${JSON.stringify(JSON.parse(data.topic_message), null, 4)}</pre>
                                         </div>
                                     </div>`;
                     return htmlStr;
@@ -292,7 +314,7 @@
             });
         }
         initSendHistoryList();
-        
+
 
         function deleteHistoryTopic(id) {
             const itemHtml = document.querySelector('.message-item-' + id);
@@ -301,7 +323,7 @@
         }
 
         function setEditorJson(id) {
-            getHistoryList(function(listData) {
+            getHistoryList(function (listData) {
                 let itemData = null;
                 for (let index = 0; index < listData.length; index++) {
                     const item = listData[index];
@@ -363,7 +385,7 @@
                 var ajaxObj = new XMLHttpRequest();
                 ajaxObj.open('POST', url, true);
                 ajaxObj.setRequestHeader('Content-type', 'application/json');
-                ajaxObj.timeout = 100000;
+                ajaxObj.timeout = 1000 * 5;
                 ajaxObj.send(postData);
                 ajaxObj.onreadystatechange = function () {
                     if (ajaxObj.readyState === 4) {
