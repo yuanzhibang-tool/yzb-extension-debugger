@@ -5,7 +5,7 @@ const { json } = require('server/reply');
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-
+const version = require('../package.json').version;
 
 /**
  * 调试器日志打印类
@@ -289,7 +289,8 @@ export class Debugger {
             viewPath = path.resolve(__dirname, htmlPath);
           }
         }
-        const content = fs.readFileSync(viewPath, 'utf8');
+        let content = fs.readFileSync(viewPath, 'utf8');
+        content = content.replace('$version$', version);
         ctx.res.setHeader('Content-Type', 'text/html');
         return content;
       }),
