@@ -7,6 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://static.yuanzhibang.com/app/yuanzhibang/image/icon/icon.png?x-oss-process=image/resize,w_60"
         rel="shortcut icon" type="image/x-icon">
+    <link href="https://static.yuanzhibang.com/common/js/josdejong-jsoneditor/v9.7.4/jsoneditor.min.css"
+        rel="stylesheet" type="text/css">
+    <script src="https://static.yuanzhibang.com/common/js/josdejong-jsoneditor/v9.7.4/jsoneditor.min.js"></script>
     <title>猿之棒拓展简单调试工具</title>
     <style type="text/css">
         * {
@@ -22,13 +25,19 @@
             font-size: 16px;
             font-weight: bold;
         }
-
-        .header-content span,
+        .header-content div{
+            max-width: 1000px;
+            min-width: 800px;
+        }
+        .version{
+            font-weight: normal;
+            font-size: 14px;
+        }
+        .header-content div,
         .content,
         .result-content {
             display: block;
             padding: 0 25px;
-            max-width: 600px;
             margin: auto;
         }
 
@@ -36,10 +45,50 @@
             padding-top: 15px;
             overflow: hidden;
             padding-bottom: 15px;
+            max-width: 1000px;
+            min-width: 800px;
+            position: relative;
+            padding-right: 340px;
+            box-sizing: border-box;
         }
-
-        .content input,
-        .content textarea {
+        .send-message-history{
+            position: absolute;
+            right: 25px;
+            top: 15px;
+            width: 300px;   
+        }
+        .send-message-history{
+            width: 300px;
+            max-width: 300px;
+            margin-left: 15px;
+            margin-top: 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 3px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .send-message-history .title {
+            line-height: 30px;
+            padding: 0 10px;
+            font-size: 13px;
+            background-color: #f1f1f1;
+            color: #555;
+            border-bottom: 1px solid #ddd;
+            overflow: hidden;
+            user-select: none;
+        }
+        .send-message-history .title span {
+            float: right;
+            cursor: pointer;
+            color: rgb(0, 102, 255);
+            opacity: 0.6;
+            transition: all 0.3s;
+        }
+        .send-message-history .title span:hover{
+            opacity: 1;
+        }
+     
+        .content input {
             display: block;
             width: 100%;
             box-sizing: border-box;
@@ -58,21 +107,14 @@
             margin: 10px 0;
         }
 
-        .content input:focus,
-        .content textarea:focus {
+        .content input:focus {
             border-color: #40a9ff;
             box-shadow: 0 0 0 2px #1890ff33;
             border-right-width: 1px !important;
             outline: 0;
         }
 
-        .content textarea {
-            display: block;
-            width: 100%;
-            line-height: initial;
-        }
-
-        .content button {
+        .content #submit-button {
             width: 110px;
             height: 32px;
             float: right;
@@ -85,15 +127,18 @@
             transition: all 0.3s;
         }
 
-        .content button:hover {
+        .content #submit-button:hover {
             color: #fff;
             background: #40a9ff;
         }
 
-        .content button:active {
+        .content #submit-button:active {
             background-color: #096dd9;
         }
-
+        .result-content{
+            padding: 0 !important;
+            margin-top: 50px;
+        }
         .result-content .box {
             min-height: 50px;
             background-color: #f3f3f3;
@@ -115,54 +160,180 @@
             right: 10px;
             top: 10px;
         }
+        #jsoneditor{
+            height: 400px;
+            padding-bottom: 15px;
+        }
+        .message-item{
+            padding: 10px;
+            font-size: 13px;
+            border-bottom: 1px solid #eee;
+        }
+        .message-item .add-time {
+            font-size: 12px;
+            color: #aaa;
+        }
+        .message-topic{
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        .message-data{
+            background-color: #f3f3f3;
+            padding: 5px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+        pre{
+            overflow-x: auto;
+        }
+        .history-message-list{
+            height: 572px;
+            overflow: auto;
+        }
+        .tool{
+            float: right;
+            display: flex;
+            align-items: center;
+        }
+        .tool span {
+            user-select: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .tool span:last-child{
+            margin-right: 0;
+        }
+        .tool span:hover {
+            color: rgb(0, 115, 255);
+        }
+        .tool span:last-child:hover {
+            color: rgb(255, 50, 50);
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <div class="header-content">
-            <span>猿之棒拓展简单调试工具</span>
+            <div>
+                猿之棒拓展简单调试工具
+                <span class="version">v$version$</span>
+            </div>
         </div>
         <div class="content">
-            <input type="text" name="topic" id="topic" placeholder="Topic">
-            <textarea name="topic-message" id="topic-message" cols="30" rows="10"
-                placeholder="Topic message (JSON)"></textarea>
-            <button id="submit-button">提交</button>
-        </div>
-        <div class="result-content">
-            <div class="box-header">返回结果内容如下:</div>
-            <div class="box">
-                <div id="result"></div>
-                <div id="time"></div>
+            <div class="send-message-box">
+                <input type="text" name="topic" id="topic" placeholder="Topic">
+                <div id="jsoneditor"></div>
+                <button id="submit-button">提交</button>
+                <div class="result-content">
+                    <div class="box-header">返回结果内容如下:</div>
+                    <div class="box">
+                        <div id="result"></div>
+                        <div id="time"></div>
+                    </div>
+                </div>
+            </div>
+          
+            <div class="send-message-history">
+                <div class="title">
+                    提交历史
+                    <span onclick="emptyHistoryMessageList()">清空</span>
+                </div>
+                <div class="history-message-list">
+                   <!-- 历史发送记录 -->
+                </div>
             </div>
         </div>
     </div>
     <script type="text/javascript">
-        // 处理textarea点击tab添加空格
-        var textarea = document.getElementById('topic-message');
-        textarea.addEventListener('keydown', function (e) {
-            if (e.keyCode == 9) {
-                e.preventDefault();
-                var indent = '    ';
-                var start = this.selectionStart;
-                var end = this.selectionEnd;
-                var selected = window.getSelection().toString();
-                selected = indent + selected.replace(/g/, '' + indent);
-                this.value = this.value.substring(0, start) + selected + this.value.substring(end);
-                this.setSelectionRange(start + indent.length, start + selected.length);
-            }
-        });
+        // 初始化jsoneditor
+        const container = document.getElementById("jsoneditor")
+        const options = {
+            mode: 'code'
+        }
+        const editor = new JSONEditor(container, options)
+        // set json
+        const initialJson = {
+            content: "Topic message (JSON)"
+        }
+        editor.set(initialJson)
+        // get json
+        function getEditorJson() {
+            return JSON.stringify(editor.get());
+        }
+
+        // 获取发送历史
+        function initSendHistoryList() {
+            getHistoryList(function(listData){
+                const getHtml = function(data) {
+                    var htmlStr = `<div class="message-item ${'message-item-' + data.id}">
+                                        <div class="add-time">
+                                            ${getCurrentDate(new Date(data.add_time * 1000))}
+                                            <div class="tool">
+                                                <span onclick="setEditorJson(${data.id})">填充</span>
+                                                <span onclick="deleteHistoryTopic(${data.id})">移除</span>
+                                            </div>
+                                        </div>
+                                        <div class="message-topic">Topic: ${data.topic}</div>
+                                        <div class="message-data">
+                                            <pre>${JSON.stringify(JSON.parse(data.topic_message), null, 4) }</pre>
+                                        </div>
+                                    </div>`;
+                    return htmlStr;
+                };
+                const htmlItems = [];
+                for (let index = 0; index < listData.length; index++) {
+                    const item = listData[index];
+                    htmlItems.push(getHtml(item));
+                }
+                const box = document.querySelector('.history-message-list');
+                box.innerHTML = htmlItems.join(' ');
+            });
+        }
+        initSendHistoryList();
+        
+
+        function deleteHistoryTopic(id) {
+            const itemHtml = document.querySelector('.message-item-' + id);
+            itemHtml.remove();
+            deleteHistory(id);
+        }
+
+        function setEditorJson(id) {
+            getHistoryList(function(listData) {
+                let itemData = null;
+                for (let index = 0; index < listData.length; index++) {
+                    const item = listData[index];
+                    if (item.id === id) {
+                        itemData = item;
+                        break;
+                    }
+                }
+                if (itemData) {
+                    var input = document.getElementById("topic");
+                    input.value = itemData.topic;
+                    editor.set(JSON.parse(itemData.topic_message));
+                }
+            })
+        }
+
+        function emptyHistoryMessageList() {
+            emptyHistory();
+            document.querySelector('.history-message-list').innerHTML = '';
+        }
 
         // submit
         var submitButton = document.getElementById('submit-button');
         submitButton.onclick = function () {
             var topic = document.getElementById('topic').value;
-            var topicData = document.getElementById('topic-message').value;
+            var topicData = getEditorJson();
             if (!topic) {
                 alert('请输入topic');
             } else if (!topicData) {
                 alert('请输入请输入 topic message');
             } else {
+                // 存储历史记录
                 var resultEle = document.getElementById('result');
                 var timeEle = document.getElementById('time');
                 resultEle.innerText = '';
@@ -178,6 +349,9 @@
                     console.log(callbackData);
                     resultEle.innerText = "收到回调结果,请在调试控制台查看.";
                     timeEle.innerText = getCurrentDate(new Date());
+                    // 存储历史记录
+                    insert(topic, topicData);
+                    initSendHistoryList();
                 }).catch(function () {
                     resultEle.innerText = '错误，请查证后重试!';
                 });
@@ -215,6 +389,64 @@
                 .replace('mm', pad(date.getMinutes()))
                 .replace('ss', pad(date.getSeconds()));
         }
+
+
+        function getDb() {
+            var db = openDatabase('yzb-extension-debugger', '1.0', 'record the yzb-extension-debugger info', 2 * 1024 * 1024);
+            return db;
+        }
+
+        function exeSql(sql, values = [], result_callback, error_callback) {
+            const db = getDb();
+            const add_time = Math.round((new Date()).getTime() / 1000);
+            db.transaction((tx) => {
+                tx.executeSql(sql,
+                    values,
+                    (tx, result) => {
+                        if (result_callback) {
+                            result_callback(result);
+                        }
+                    },
+                    (tx, error) => {
+                        if (error_callback) {
+                            error_callback(error);
+                        }
+                    })
+            });
+        }
+
+        function initDb() {
+            exeSql('CREATE TABLE IF NOT EXISTS extension_debugger_history (id integer primary key autoincrement, topic,topic_message,add_time int)');
+        }
+
+        function insert(topic, topic_message) {
+            const add_time = Math.round((new Date()).getTime() / 1000);
+            exeSql('INSERT INTO  extension_debugger_history (topic, topic_message, add_time) VALUES (?, ?,?)', [topic, topic_message, add_time]);
+        }
+
+        function deleteHistory(id) {
+            exeSql(`DELETE FROM extension_debugger_history WHERE id =${id};`);
+        }
+        function emptyHistory() {
+            exeSql("DELETE FROM extension_debugger_history");
+        }
+
+        function getHistoryList(callback) {
+            exeSql("SELECT * FROM extension_debugger_history ORDER BY id DESC LIMIT 20", [], (result) => {
+                // !删除大于50条的内容
+                const max = 50;
+                if (result.rows.length > 1) {
+                    const lastItem = result.rows[0];
+                    const lastId = lastItem.id + 1 - max;
+                    if (lastId > 0) {
+                        exeSql(`DELETE FROM extension_debugger_history WHERE id < ${lastId};`);
+                    }
+                }
+                callback(result.rows);
+            });
+        }
+        initDb();
+    </script>
     </script>
 </body>
 
