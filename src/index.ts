@@ -1,4 +1,6 @@
 import { ChildProcess } from 'child_process';
+import { ExtensionRendererMessageTopic } from '@yuanzhibang/common';
+
 const server = require('server');
 const { get, post } = server.router;
 const { json } = require('server/reply');
@@ -233,7 +235,7 @@ export class Debugger {
   }
 
   /**
-   * 模拟渲染进程发送topic消息,和@yuanzhibang/node中的IpcRendererWorker的sendPromise方法
+   * 模拟渲染进程发送topic消息,和@yuanzhibang/renderer中的IpcRendererWorker的sendPromise方法
    * @param topic 消息topic
    * @param topicMessage topic消息的消息体
    * @returns 返回发送消息的promise
@@ -241,6 +243,24 @@ export class Debugger {
   sendPromise(topic: string, topicMessage: any): Promise<any> {
     const message = this.getTopicProcessMessage(topic, topicMessage);
     return this.sendMessageToProcess(message);
+  }
+
+  /**
+   * 模拟渲染进程发送用户退出消息,用以模拟@yuanzhibang/renderer 中 worker的exit方法
+   * @param message 发送的用户退出消息,可以为null
+   * @returns 返回发送消息的promise
+   */
+  sendUserExit(message: any = null): Promise<any> {
+    return this.sendPromise(ExtensionRendererMessageTopic.USER_EXIT, message);
+  }
+
+  /**
+   * 模拟渲染进程发送用户退出消息,用以模拟@yuanzhibang/renderer 中 worker的getProperty方法
+   * @param message 发送的获取属性消息,可以为null
+   * @returns 返回发送消息的promise
+   */
+  sendGetProperty(message: any = null): Promise<any> {
+    return this.sendPromise(ExtensionRendererMessageTopic.GET_PROPERTY, message);
   }
 
   /**
