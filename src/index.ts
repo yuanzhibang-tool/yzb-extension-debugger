@@ -8,6 +8,7 @@ const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const version = require('../package.json').version;
+var WebSocket = require('ws');
 
 /**
  * 调试器日志打印类
@@ -283,6 +284,20 @@ export class Debugger {
     return message;
   }
 
+  // 启动ws调试服务器,用以renderer联合调试
+  startWsServer(port: number = 8889): void {
+    const wsServer = new WebSocket.Server({ host: 'localhost', port }, () => {
+      DebuggerLogger.log('debug ws server started');
+    });
+    wsServer.on('connection', (client) => {
+      console.log('连接成功');
+      DebuggerLogger.log('renderer connected');
+      client.on('message', (msg) => {
+        // !message格式{"topic":"", message:{}}
+        console.log(msg);
+      });
+    });
+  }
   /**
    * 启动调试服务器
    * @param [port] 启动调试服务器的端口号
