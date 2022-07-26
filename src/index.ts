@@ -1,5 +1,5 @@
 import { ChildProcess } from 'child_process';
-import { ExtensionRendererMessageTopic } from '@yuanzhibang/common';
+import { ExtensionLifecycleEventMessageTopic, ExtensionRendererMessageTopic } from '@yuanzhibang/common';
 
 const server = require('server');
 const { get, post } = server.router;
@@ -154,6 +154,10 @@ export class Debugger {
   extensionPath: string | null = null;
 
   abortController: AbortController | null = null;
+
+  exeName: string = "";
+
+  socketClient: any;
   /**
    * 创建类实例
    * @param [withLog] 是否打印调试日志,默认为true
@@ -297,6 +301,7 @@ export class Debugger {
     });
     wsServer.on('connection', (client) => {
       console.log('连接成功');
+      this.socketClient = client;
       DebuggerLogger.log('renderer connected');
       client.on('message', (msg) => {
         const messageString = msg.toString('utf8');
@@ -304,22 +309,31 @@ export class Debugger {
         console.log(msg);
         switch (message.nativeName) {
           case "run":
-            this.checkExtensionIsRunning(client, message.identity);
+            this.checkExtensionIsRunning(message.identity);
             // 先发送回调消息
-            this.wsSendToRenderer(client, message.identity, 'next', null);
+            this.wsSendToRenderer(message.identity, 'next', null);
             // 运行
             this.runExtension(null, message.data);
             break;
           case "stop":
             // 停止
-            const isRunning = this.isExtensionRunning();
-            this.wsSendToRenderer(client, message.identity, 'next', null);
-            if (!isRunning) {
+            this.wsSendToRenderer(message.identity, 'next', null);
+            if (!this.isExtensionRunning()) {
               return;
             }
-            this.abortController?.abort();
+            try {
+              this.abortController?.abort();
+            } catch (error) {
+            }
             break;
           case "getProcessInfo":
+            const processInfo = {};
+            if (this.isExtensionRunning()) {
+              processInfo[this.exeName] = {
+                is_running: true
+              };
+            }
+            this.wsSendToRenderer(message.identity, 'next', processInfo);
             break;
           case "sendProcessMessage":
 
@@ -338,18 +352,18 @@ export class Debugger {
     return isRunning;
   }
 
-  checkExtensionIsRunning(client: any, identity: string) {
+  checkExtensionIsRunning(identity: string) {
     if (this.isExtensionRunning()) {
-      this.wsSendToRenderer(client, identity, 'error', {
+      this.wsSendToRenderer(identity, 'error', {
         code: '500001',
         message: 'process with the name is running',
         suggestion: 'plase check the process name or stop the process',
       });
     }
   }
-  checkExtensionIsNotRunning(client: any, identity: string) {
+  checkExtensionIsNotRunning(identity: string) {
     if (!this.isExtensionRunning()) {
-      this.wsSendToRenderer(client, identity, 'error', {
+      this.wsSendToRenderer(identity, 'error', {
         code: '500002',
         message: 'process with the name is not running',
         suggestion: 'plase check the process is running',
@@ -357,14 +371,24 @@ export class Debugger {
     }
   }
 
-  wsSendToRenderer(client: any, identity: string, type: 'next' | 'error' | 'cancel', result: any) {
+  wsSendToRenderer(identity: string, type: 'next' | 'error' | 'cancel', result: any) {
     const message = {
       identity,
       type,
       result
     };
     const messageString = JSON.stringify(message);
-    client.send(messageString);
+    this.socketClient.send(messageString);
+  }
+
+  wsSendCallbackMessage(data: any) {
+    const callbackInfo = {
+      name: this.exeName,
+      type: 'yzb_ipc_renderer_message',
+      data,
+    };
+    const messageString = JSON.stringify(callbackInfo);
+    this.socketClient.send(messageString);
   }
 
   /**
@@ -427,6 +451,7 @@ export class Debugger {
    * @param extensionPath js或者ts的入口文件地址,null为了便于进行单元测试
    */
   runExtension(extensionPath: string | null = null, extensionParams: any = {}): void {
+    this.exeName = extensionParams['name'];
     if (extensionPath) {
       this.extensionPath = extensionPath;
     };
@@ -450,6 +475,8 @@ export class Debugger {
     this.abortController = new AbortController();
     const { signal } = this.abortController;
 
+    this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_START, message: null });
+
     if (this.extensionPath) {
       // 支持ts,判断后缀
       if (this.extensionPath.endsWith('.ts')) {
@@ -472,6 +499,32 @@ export class Debugger {
         });
       }
     }
+    this.extensionProcess?.stderr?.on('data', (data: Buffer) => {
+      if (typeof data === 'string') {
+        data = Buffer.from(data, 'utf-8');
+      }
+      const bufferArray = data.toJSON().data;
+      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_STDERR, message: bufferArray });
+    });
+
+    this.extensionProcess?.stdout?.on('data', (data: Buffer) => {
+      // !发给前端是二进制的array
+      if (typeof data === 'string') {
+        data = Buffer.from(data, 'utf-8');
+      }
+      const bufferArray = data.toJSON().data;
+      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_STDOUT, message: bufferArray });
+    });
+
+    this.extensionProcess?.on('close', (code) => {
+      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_CLOSE, message: code });
+    });
+    this.extensionProcess?.on('exit', (code) => {
+      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_EXIT, message: code });
+    });
+    this.extensionProcess?.on('error', (error) => {
+      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_ERROR, message: error });
+    });
     this.extensionProcess?.on('message', (message: any) => {
       if (message !== null && typeof message === 'object') {
         if (message.hasOwnProperty('__type')) {
