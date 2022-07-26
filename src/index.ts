@@ -381,11 +381,18 @@ export class Debugger {
     this.socketClient.send(messageString);
   }
 
-  wsSendCallbackMessage(data: any) {
+  wsSendRendererTopicMessage(topic: string, message: any) {
+    this.wsSendRendererMessage('yzb_ipc_renderer_message', {
+      topic,
+      message
+    });
+  }
+
+  wsSendRendererMessage(type: string, data: any) {
     const callbackInfo = {
       name: this.exeName,
-      type: 'yzb_ipc_renderer_message',
-      data,
+      type,
+      data
     };
     const messageString = JSON.stringify(callbackInfo);
     this.socketClient.send(messageString);
@@ -475,7 +482,7 @@ export class Debugger {
     this.abortController = new AbortController();
     const { signal } = this.abortController;
 
-    this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_START, message: null });
+    this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_START, null);
 
     if (this.extensionPath) {
       // 支持ts,判断后缀
@@ -504,7 +511,7 @@ export class Debugger {
         data = Buffer.from(data, 'utf-8');
       }
       const bufferArray = data.toJSON().data;
-      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_STDERR, message: bufferArray });
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_STDERR, bufferArray);
     });
 
     this.extensionProcess?.stdout?.on('data', (data: Buffer) => {
@@ -513,17 +520,17 @@ export class Debugger {
         data = Buffer.from(data, 'utf-8');
       }
       const bufferArray = data.toJSON().data;
-      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_STDOUT, message: bufferArray });
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_STDOUT, bufferArray);
     });
 
     this.extensionProcess?.on('close', (code) => {
-      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_CLOSE, message: code });
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_CLOSE, code);
     });
     this.extensionProcess?.on('exit', (code) => {
-      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_EXIT, message: code });
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_EXIT, code);
     });
     this.extensionProcess?.on('error', (error) => {
-      this.wsSendCallbackMessage({ topic: ExtensionLifecycleEventMessageTopic.ON_ERROR, message: error });
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_ERROR, error);
     });
     this.extensionProcess?.on('message', (message: any) => {
       if (message !== null && typeof message === 'object') {
@@ -602,17 +609,20 @@ export class Debugger {
             if (this.rendererTopicMessageCallback) {
               this.rendererTopicMessageCallback(message.topic, message.message);
             }
+            this.wsSendRendererTopicMessage(message.topic, message.message);
           } else {
             DebuggerLogger.echoRendererOtherMessage(message);
             if (this.rendererOtherMessageCallback) {
               this.rendererOtherMessageCallback(message);
             }
+            this.wsSendRendererMessage('message', message);
           }
         } else {
           DebuggerLogger.echoRendererOtherMessage(message);
           if (this.rendererOtherMessageCallback) {
             this.rendererOtherMessageCallback(message);
           }
+          this.wsSendRendererMessage('message', message);
         }
       }
     });
