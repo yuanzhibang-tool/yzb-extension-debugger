@@ -151,6 +151,9 @@ export class Debugger {
    */
   withLog = true;
 
+  extensionPath: string | null = null;
+
+  abortController: AbortController | null = null;
   /**
    * 创建类实例
    * @param [withLog] 是否打印调试日志,默认为true
@@ -160,6 +163,9 @@ export class Debugger {
     DebuggerLogger.withLog = withLog;
   }
 
+  setExtensionPath(path: string) {
+    this.extensionPath = path;
+  }
   /**
    * 设置模拟渲染端topic消息回调
    * @param callback 消息的回调
@@ -294,21 +300,26 @@ export class Debugger {
       DebuggerLogger.log('renderer connected');
       client.on('message', (msg) => {
         const messageString = msg.toString('utf8');
-        // !message格式{"topic":"", message:{}}
         const message = JSON.parse(messageString);
         console.log(msg);
         switch (message.nativeName) {
           case "run":
+            this.checkExtensionIsRunning(client, message.identity);
+            // 先发送回调消息
+            this.wsSendToRenderer(client, message.identity, 'next', null);
             // 运行
+            this.runExtension(null, message.data);
             break;
           case "stop":
             // 停止
-            break;
-          case "setCallback":
-            // 设置消息回调
+            const isRunning = this.isExtensionRunning();
+            this.wsSendToRenderer(client, message.identity, 'next', null);
+            if (!isRunning) {
+              return;
+            }
+            this.abortController?.abort();
             break;
           case "getProcessInfo":
-
             break;
           case "sendProcessMessage":
 
@@ -319,6 +330,43 @@ export class Debugger {
       });
     });
   }
+  isExtensionRunning() {
+    if (!this.extensionProcess) {
+      return false;
+    }
+    const isRunning = this.extensionProcess && this.extensionProcess.exitCode === null && !this.extensionProcess.killed;
+    return isRunning;
+  }
+
+  checkExtensionIsRunning(client: any, identity: string) {
+    if (this.isExtensionRunning()) {
+      this.wsSendToRenderer(client, identity, 'error', {
+        code: '500001',
+        message: 'process with the name is running',
+        suggestion: 'plase check the process name or stop the process',
+      });
+    }
+  }
+  checkExtensionIsNotRunning(client: any, identity: string) {
+    if (!this.isExtensionRunning()) {
+      this.wsSendToRenderer(client, identity, 'error', {
+        code: '500002',
+        message: 'process with the name is not running',
+        suggestion: 'plase check the process is running',
+      });
+    }
+  }
+
+  wsSendToRenderer(client: any, identity: string, type: 'next' | 'error' | 'cancel', result: any) {
+    const message = {
+      identity,
+      type,
+      result
+    };
+    const messageString = JSON.stringify(message);
+    client.send(messageString);
+  }
+
   /**
    * 启动调试服务器
    * @param [port] 启动调试服务器的端口号
@@ -378,13 +426,50 @@ export class Debugger {
    * 根据js或者ts路径运行拓展进程
    * @param extensionPath js或者ts的入口文件地址,null为了便于进行单元测试
    */
-  runExtension(extensionPath: string | null): void {
+  runExtension(extensionPath: string | null = null, extensionParams: any = {}): void {
     if (extensionPath) {
+      this.extensionPath = extensionPath;
+    };
+    let args = extensionParams.args;
+    let env: any = extensionParams.env;
+    if (!args) {
+      args = [];
+    }
+    if (!env) {
+      env = {};
+    }
+    const appDir = "./";
+    env.HOME = appDir;
+    // 设置app_id和app_dir目录
+    env.APP_ID = extensionParams.app_id;
+    env.APP_DIR = appDir;
+    let timeout = null;
+    if (extensionParams.timeout) {
+      timeout = extensionParams.timeout;
+    }
+    this.abortController = new AbortController();
+    const { signal } = this.abortController;
+
+    if (this.extensionPath) {
       // 支持ts,判断后缀
-      if (extensionPath.endsWith('.ts')) {
-        this.extensionProcess = fork(extensionPath, ['-r', 'ts-node/register']);
+      if (this.extensionPath.endsWith('.ts')) {
+        args.push('-r');
+        args.push('ts-node/register');
+        this.extensionProcess = fork(this.extensionPath, args, {
+          env,
+          signal,
+          timeout: timeout,
+          stdio: 'pipe',
+          cwd: appDir,
+        });
       } else {
-        this.extensionProcess = fork(extensionPath);
+        this.extensionProcess = fork(this.extensionPath, args, {
+          env,
+          signal,
+          timeout: timeout,
+          stdio: 'pipe',
+          cwd: appDir,
+        });
       }
     }
     this.extensionProcess?.on('message', (message: any) => {
