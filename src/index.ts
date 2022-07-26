@@ -293,8 +293,29 @@ export class Debugger {
       console.log('连接成功');
       DebuggerLogger.log('renderer connected');
       client.on('message', (msg) => {
+        const messageString = msg.toString('utf8');
         // !message格式{"topic":"", message:{}}
+        const message = JSON.parse(messageString);
         console.log(msg);
+        switch (message.nativeName) {
+          case "run":
+            // 运行
+            break;
+          case "stop":
+            // 停止
+            break;
+          case "setCallback":
+            // 设置消息回调
+            break;
+          case "getProcessInfo":
+
+            break;
+          case "sendProcessMessage":
+
+            break;
+          default:
+            break;
+        }
       });
     });
   }
