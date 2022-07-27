@@ -26,4 +26,11 @@ const willExitData = {
     type: 'willExitData'
 };
 
+ipc.on('test-topic', (sender, message) => {
+    const callbackMessage = {
+        type: 'callbackMessage'
+    };
+    sender.next(callbackMessage);
+});
+
 ipc.sendOnWillExit(willExitData);

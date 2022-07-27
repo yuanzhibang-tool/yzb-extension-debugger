@@ -336,7 +336,12 @@ export class Debugger {
             this.wsSendToRenderer(message.identity, 'next', processInfo);
             break;
           case "sendProcessMessage":
-
+            this.sendPromise(message.data.message.topic, message.data.message.message).then((data) => {
+              this.wsSendToRenderer(message.identity, 'next', data);
+            }
+            ).catch((error) => {
+              this.wsSendToRenderer(message.identity, 'error', error);
+            });
             break;
           default:
             break;
