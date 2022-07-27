@@ -306,7 +306,6 @@ export class Debugger {
       client.on('message', (msg) => {
         const messageString = msg.toString('utf8');
         const message = JSON.parse(messageString);
-        console.log(msg);
         switch (message.nativeName) {
           case "run":
             this.checkExtensionIsRunning(message.identity);

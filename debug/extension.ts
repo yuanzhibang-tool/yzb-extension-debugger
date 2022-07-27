@@ -20,6 +20,7 @@ ipc.onGetProperty((sender, message) => {
 ipc.onUserExit((sender, message) => {
     console.log(message);
     sender.next({});
+    process.exit(0);
 });
 
 const willExitData = {
