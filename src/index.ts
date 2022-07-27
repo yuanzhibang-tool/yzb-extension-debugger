@@ -294,15 +294,17 @@ export class Debugger {
     return message;
   }
 
-  // 启动ws调试服务器,用以renderer联合调试
+  /**
+   * 启动ws调试服务器,用以renderer联合调试
+   * @param [port] 启动的ws端口号默认使用8889
+   */
   startWsServer(port: number = 8889): void {
-    const wsServer = new WebSocket.Server({ host: 'localhost', port }, () => {
+    const wsServer = new WebSocket.Server({ host: '0.0.0.0', port }, () => {
       DebuggerLogger.log('debug ws server started');
     });
     wsServer.on('connection', (client) => {
-      console.log('连接成功');
       this.socketClient = client;
-      DebuggerLogger.log('renderer connected');
+      DebuggerLogger.log('renderer debugger connected!');
       client.on('message', (msg) => {
         const messageString = msg.toString('utf8');
         const message = JSON.parse(messageString);
@@ -348,7 +350,12 @@ export class Debugger {
       });
     });
   }
-  isExtensionRunning() {
+
+  /**
+   * 内部方法无需关注,返回拓展是否在运行
+   * @returns  boolean 是否运行
+   */
+  isExtensionRunning(): boolean {
     if (!this.extensionProcess) {
       return false;
     }
@@ -356,6 +363,10 @@ export class Debugger {
     return isRunning;
   }
 
+  /**
+   * 内部方法无需关注,检测同名process是否运行,运行中则返回错误
+   * @param identity 对应的调用识别
+   */
   checkExtensionIsRunning(identity: string) {
     if (this.isExtensionRunning()) {
       this.wsSendToRenderer(identity, 'error', {
@@ -365,6 +376,11 @@ export class Debugger {
       });
     }
   }
+
+  /**
+   * 内部方法无需关注,检测同名process是否运行,未运行则返回错误
+   * @param identity 对应的调用识别
+   */
   checkExtensionIsNotRunning(identity: string) {
     if (!this.isExtensionRunning()) {
       this.wsSendToRenderer(identity, 'error', {
@@ -375,6 +391,12 @@ export class Debugger {
     }
   }
 
+  /**
+   * 内部方法无需关注,发送调试消息到拓展进程
+   * @param identity 对应的调用识别
+   * @param type 消息类型
+   * @param result 输出结果
+   */
   wsSendToRenderer(identity: string, type: 'next' | 'error' | 'cancel', result: any) {
     const message = {
       identity,
@@ -385,6 +407,11 @@ export class Debugger {
     this.socketClient.send(messageString);
   }
 
+  /**
+   * 内部方法无需关注,发送topic消息到拓展进程
+   * @param topic 对应的消息主题
+   * @param message  对应的消息体
+   */
   wsSendRendererTopicMessage(topic: string, message: any) {
     this.wsSendRendererMessage('yzb_ipc_renderer_message', {
       topic,
@@ -392,6 +419,11 @@ export class Debugger {
     });
   }
 
+  /**
+   * 内部方法无需关注,向渲染进程发送消息
+   * @param type 消息类型
+   * @param data 消息体
+   */
   wsSendRendererMessage(type: string, data: any) {
     const callbackInfo = {
       name: this.exeName,
