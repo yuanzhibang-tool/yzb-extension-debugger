@@ -1,6 +1,6 @@
 {
   "name": "@yuanzhibang/extension-debugger",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "description": "猿之棒拓展调试工具，主要用于网络模拟renderer进程通信,以及单元测试",
   "main": "commonjs/index.js",
   "module": "es6/index.js",
