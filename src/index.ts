@@ -404,7 +404,10 @@ export class Debugger {
       result
     };
     const messageString = JSON.stringify(message);
-    this.socketClient.send(messageString);
+    try {
+      this.socketClient.send(messageString);
+    } catch (error) {
+    }
   }
 
   /**
@@ -431,7 +434,10 @@ export class Debugger {
       data
     };
     const messageString = JSON.stringify(callbackInfo);
-    this.socketClient.send(messageString);
+    try {
+      this.socketClient.send(messageString);
+    } catch (error) {
+    }
   }
 
   /**
