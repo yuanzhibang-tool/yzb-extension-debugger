@@ -511,18 +511,20 @@ export class Debugger {
       this.extensionPath = extensionPath;
     };
     let args = extensionParams.args;
-    let env: any = extensionParams.env;
+    let passEnv: any = extensionParams.env;
     if (!args) {
       args = [];
     }
-    if (!env) {
-      env = {};
+    if (!passEnv) {
+      passEnv = {};
     }
     const appDir = "./";
-    env.HOME = appDir;
+    passEnv.HOME = appDir;
     // 设置app_id和app_dir目录
-    env.APP_ID = extensionParams.app_id;
-    env.APP_DIR = appDir;
+    passEnv.APP_ID = extensionParams.app_id;
+    passEnv.APP_DIR = appDir;
+    const env = { ...process.env, ...passEnv };
+
     let timeout = null;
     if (extensionParams.timeout) {
       timeout = extensionParams.timeout;
