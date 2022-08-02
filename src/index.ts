@@ -9,6 +9,8 @@ const fs = require('fs');
 const path = require('path');
 const version = require('../package.json').version;
 var WebSocket = require('ws');
+const express = require('express');
+var bodyParser = require('body-parser');
 
 /**
  * 调试器日志打印类
@@ -455,45 +457,49 @@ export class Debugger {
     };
     DebuggerLogger.table(consoleData);
     DebuggerLogger.echoMessageDeliver();
-    server({ port, security: { csrf: false } }, [
-      get('/', ctx => {
-        let viewPath = path.resolve(__dirname, '../view/debug.html');
-        if (htmlPath) {
-          if (htmlPath.startsWith('/')) {
-            // !此为绝对路径,仅支持linux和darwin平台,win平台暂不支持
-            viewPath = htmlPath;
-          } else {
-            viewPath = path.resolve(__dirname, htmlPath);
-          }
+    const app = express();
+    app.use(bodyParser.json());
+    app.get('/', function (req, res) {
+      let viewPath = path.resolve(__dirname, '../view/debug.html');
+      if (htmlPath) {
+        if (htmlPath.startsWith('/')) {
+          // !此为绝对路径,仅支持linux和darwin平台,win平台暂不支持
+          viewPath = htmlPath;
+        } else {
+          viewPath = path.resolve(__dirname, htmlPath);
         }
-        let content = fs.readFileSync(viewPath, 'utf8');
-        content = content.replace('$version$', version);
-        ctx.res.setHeader('Content-Type', 'text/html');
-        return content;
-      }),
-      post('/*', async ctx => {
-        const url = ctx.url;
-        const body = ctx.body;
-        const topic = url.slice(1);
-        const message = this.getTopicProcessMessage(topic, body);
-        try {
-          const result = await this.sendMessageToProcess(message);
-          DebuggerLogger.log(result);
-          const resultData = {
-            type: 'next/then',
-            data: result
-          };
-          return json(resultData);
-        } catch (error) {
-          DebuggerLogger.error(error);
-          const errorData = {
-            type: 'error',
-            data: error
-          };
-          return json(errorData);
-        }
-      })
-    ]);
+      }
+      let content = fs.readFileSync(viewPath, 'utf8');
+      content = content.replace('$version$', version);
+      res.set('Content-Type', 'text/html');
+      res.send(content);
+    });
+    app.post('/*', async (req, res) => {
+      const url = req.url;
+      const body = req.body;
+      const topic = url.slice(1);
+      const message = this.getTopicProcessMessage(topic, body);
+      try {
+        const result = await this.sendMessageToProcess(message);
+        DebuggerLogger.log(result);
+        const resultData = {
+          type: 'next/then',
+          data: result
+        };
+        res.set('Content-Type', 'application/json');
+        res.send(JSON.stringify(resultData));
+      } catch (error) {
+        DebuggerLogger.error(error);
+        const errorData = {
+          type: 'error',
+          data: error
+        };
+        res.set('Content-Type', 'application/json');
+        res.send(JSON.stringify(errorData));
+      }
+    });
+
+    app.listen(port);
   }
   /**
    * 根据js或者ts路径运行拓展进程
