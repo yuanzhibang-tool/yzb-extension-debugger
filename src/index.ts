@@ -1,9 +1,5 @@
 import { ChildProcess } from 'child_process';
 import { ExtensionLifecycleEventMessageTopic, ExtensionRendererMessageTopic } from '@yuanzhibang/common';
-
-const server = require('server');
-const { get, post } = server.router;
-const { json } = require('server/reply');
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
