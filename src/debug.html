@@ -355,6 +355,9 @@
             } else if (!topicData) {
                 alert('请输入请输入 topic message');
             } else {
+                insert(topic, topicData, () => {
+                    initSendHistoryList();
+                });
                 // 存储历史记录
                 var resultEle = document.getElementById('result');
                 var timeEle = document.getElementById('time');
@@ -372,8 +375,6 @@
                     resultEle.innerText = "收到回调结果,请在调试控制台查看.";
                     timeEle.innerText = getCurrentDate(new Date());
                     // 存储历史记录
-                    insert(topic, topicData);
-                    initSendHistoryList();
                 }).catch(function () {
                     resultEle.innerText = '错误，请查证后重试!';
                 });
@@ -441,9 +442,15 @@
             exeSql('CREATE TABLE IF NOT EXISTS extension_debugger_history (id integer primary key autoincrement, topic,topic_message,add_time int)');
         }
 
-        function insert(topic, topic_message) {
+        function insert(topic, topic_message, finishCallback) {
             const add_time = Math.round((new Date()).getTime() / 1000);
-            exeSql('INSERT INTO  extension_debugger_history (topic, topic_message, add_time) VALUES (?, ?,?)', [topic, topic_message, add_time]);
+            exeSql('DELETE FROM extension_debugger_history WHERE topic = ? and topic_message = ?;', [topic, topic_message], () => {
+                exeSql('INSERT INTO  extension_debugger_history (topic, topic_message, add_time) VALUES (?, ?,?)', [topic, topic_message, add_time], () => {
+                    if (finishCallback) {
+                        finishCallback();
+                    }
+                });
+            });
         }
 
         function deleteHistory(id) {
