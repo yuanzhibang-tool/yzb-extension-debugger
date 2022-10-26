@@ -10,6 +10,9 @@
     <link href="https://static.yuanzhibang.com/common/js/josdejong-jsoneditor/v9.7.4/jsoneditor.min.css"
         rel="stylesheet" type="text/css">
     <script src="https://static.yuanzhibang.com/common/js/josdejong-jsoneditor/v9.7.4/jsoneditor.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue-i18n@9"></script>
+
     <title>猿之棒拓展简单调试工具</title>
     <style type="text/css">
         * {
@@ -236,10 +239,10 @@
 </head>
 
 <body>
-    <div class="container">
+    <div class="container" id="app">
         <div class="header-content">
             <div>
-                猿之棒拓展简单调试工具
+                {{ $t("message.title") }}
                 <span class="version">v$version$</span>
             </div>
         </div>
@@ -247,7 +250,7 @@
             <div class="send-message-box">
                 <input type="text" name="topic" id="topic" placeholder="Topic">
                 <div id="jsoneditor"></div>
-                <button id="submit-button">提交</button>
+                <button id="submit-button" @click="submit();">提交</button>
                 <div class="result-content">
                     <div class="box-header">返回结果内容如下:</div>
                     <div class="box">
@@ -260,222 +263,244 @@
             <div class="send-message-history">
                 <div class="title">
                     提交历史
-                    <span onclick="emptyHistoryMessageList()">清空</span>
+                    <span @click="emptyHistoryMessageList()">清空</span>
                 </div>
                 <div class="history-message-list">
                     <!-- 历史发送记录 -->
+                    <div v-for="item in historyItems" class="message-item">
+                        <div class="add-time">
+                            {{this.getCurrentDate(new Date(item.add_time * 1000))}}
+                            <div class="tool">
+                                <span @click="setEditorJson(item.id)">填充</span>
+                                <span @click="deleteHistoryTopic(item.id)">移除</span>
+                            </div>
+                        </div>
+                        <div class="message-topic">Topic: {{item.topic}}</div>
+                        <div class="message-data">
+                            <pre>{{JSON.stringify(JSON.parse(item.topic_message), null, 4)}}</pre>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <script type="text/javascript">
-        // 初始化jsoneditor
-        const container = document.getElementById("jsoneditor")
-        const options = {
-            mode: 'code'
-        }
-        const editor = new JSONEditor(container, options)
-        // set json
-        const initialJson = {
-            content: "Topic message (JSON)"
-        }
-        editor.set(initialJson)
-        // get json
-        function getEditorJson() {
-            return JSON.stringify(editor.get());
-        }
-
-        // 获取发送历史
-        function initSendHistoryList() {
-            getHistoryList(function (listData) {
-                const getHtml = function (data) {
-                    var htmlStr = `<div class="message-item ${'message-item-' + data.id}">
-                                        <div class="add-time">
-                                            ${getCurrentDate(new Date(data.add_time * 1000))}
-                                            <div class="tool">
-                                                <span onclick="setEditorJson(${data.id})">填充</span>
-                                                <span onclick="deleteHistoryTopic(${data.id})">移除</span>
-                                            </div>
-                                        </div>
-                                        <div class="message-topic">Topic: ${data.topic}</div>
-                                        <div class="message-data">
-                                            <pre>${JSON.stringify(JSON.parse(data.topic_message), null, 4)}</pre>
-                                        </div>
-                                    </div>`;
-                    return htmlStr;
-                };
-                const htmlItems = [];
-                for (let index = 0; index < listData.length; index++) {
-                    const item = listData[index];
-                    htmlItems.push(getHtml(item));
+    <script>
+        const { createApp } = Vue
+        const app = createApp({
+            data() {
+                return {
+                    historyItems: []
                 }
-                const box = document.querySelector('.history-message-list');
-                box.innerHTML = htmlItems.join(' ');
-            });
-        }
-        initSendHistoryList();
-
-
-        function deleteHistoryTopic(id) {
-            const itemHtml = document.querySelector('.message-item-' + id);
-            itemHtml.remove();
-            deleteHistory(id);
-        }
-
-        function setEditorJson(id) {
-            getHistoryList(function (listData) {
-                let itemData = null;
-                for (let index = 0; index < listData.length; index++) {
-                    const item = listData[index];
-                    if (item.id === id) {
-                        itemData = item;
-                        break;
-                    }
+            },
+            // `mounted` 是生命周期钩子，之后我们会讲到
+            mounted() {
+                // 初始化jsoneditor
+                const container = document.getElementById("jsoneditor")
+                const options = {
+                    mode: 'code'
                 }
-                if (itemData) {
-                    var input = document.getElementById("topic");
-                    input.value = itemData.topic;
-                    editor.set(JSON.parse(itemData.topic_message));
+                const editor = new JSONEditor(container, options)
+                // set json
+                const initialJson = {
+                    content: "Topic message (JSON)"
                 }
-            })
-        }
-
-        function emptyHistoryMessageList() {
-            emptyHistory();
-            document.querySelector('.history-message-list').innerHTML = '';
-        }
-
-        // submit
-        var submitButton = document.getElementById('submit-button');
-        submitButton.onclick = function () {
-            var topic = document.getElementById('topic').value;
-            var topicData = getEditorJson();
-            if (!topic) {
-                alert('请输入topic');
-            } else if (!topicData) {
-                alert('请输入请输入 topic message');
-            } else {
-                insert(topic, topicData, () => {
-                    initSendHistoryList();
-                });
-                // 存储历史记录
-                var resultEle = document.getElementById('result');
-                var timeEle = document.getElementById('time');
-                resultEle.innerText = '';
-                timeEle.innerText = '';
-                ajax(topic, topicData).then(function (result) {
-                    const resultObject = JSON.parse(result);
-                    var callbackType = resultObject.type;
-                    var callbackData = resultObject.data;
-                    console.log(`\u001b[1;35m ------- *${Date()}* ------- \u001b[0m`);
-                    console.log(`\u001b[1;31m * Recieve callback from node \u001b[0m`);
-                    console.log(`\u001b[1;32m * callback type: ${callbackType} \u001b[0m`);
-                    console.log(`\u001b[1;33m * callback data below: \u001b[0m`);
-                    console.log(callbackData);
-                    resultEle.innerText = "收到回调结果,请在调试控制台查看.";
-                    timeEle.innerText = getCurrentDate(new Date());
-                    // 存储历史记录
-                }).catch(function () {
-                    resultEle.innerText = '错误，请查证后重试!';
-                });
-            }
-        };
-
-        function ajax(url, postData) {
-            return new Promise(function (resolve, reject) {
-                var ajaxObj = new XMLHttpRequest();
-                ajaxObj.open('POST', url, true);
-                ajaxObj.setRequestHeader('Content-type', 'application/json');
-                ajaxObj.timeout = 1000 * 5;
-                ajaxObj.send(postData);
-                ajaxObj.onreadystatechange = function () {
-                    if (ajaxObj.readyState === 4) {
-                        if (ajaxObj.status === 200) {
-                            resolve(ajaxObj.response);
-                        } else {
-                            reject();
+                editor.set(initialJson)
+                this.editor = editor;
+                this.initDb();
+                this.initSendHistoryList();
+            },
+            methods: {
+                getHistoryList(callback) {
+                    this.exeSql("SELECT * FROM extension_debugger_history ORDER BY id DESC LIMIT 20", [], (result) => {
+                        // !删除大于50条的内容
+                        const max = 50;
+                        if (result.rows.length > 1) {
+                            const lastItem = result.rows[0];
+                            const lastId = lastItem.id + 1 - max;
+                            if (lastId > 0) {
+                                this.exeSql(`DELETE FROM extension_debugger_history WHERE id < ${lastId};`);
+                            }
                         }
-                    }
-                };
-            });
-        }
-
-        function getCurrentDate(date, format = 'yyyy-MM-dd HH:mm:ss') {
-            var pad = function (n) {
-                return n < 10 ? `0${n}` : n.toString();
-            };
-            return format
-                .replace('yyyy', date.getFullYear())
-                .replace('MM', pad(date.getMonth() + 1))
-                .replace('dd', pad(date.getDate()))
-                .replace('HH', pad(date.getHours()))
-                .replace('mm', pad(date.getMinutes()))
-                .replace('ss', pad(date.getSeconds()));
-        }
-
-
-        function getDb() {
-            var db = openDatabase('yzb-extension-debugger', '1.0', 'record the yzb-extension-debugger info', 2 * 1024 * 1024);
-            return db;
-        }
-
-        function exeSql(sql, values = [], result_callback, error_callback) {
-            const db = getDb();
-            const add_time = Math.round((new Date()).getTime() / 1000);
-            db.transaction((tx) => {
-                tx.executeSql(sql,
-                    values,
-                    (tx, result) => {
-                        if (result_callback) {
-                            result_callback(result);
+                        callback(result.rows);
+                    });
+                },
+                emptyHistory() {
+                    this.exeSql("DELETE FROM extension_debugger_history");
+                },
+                deleteHistory(id) {
+                    this.exeSql(`DELETE FROM extension_debugger_history WHERE id =${id};`);
+                },
+                insert(topic, topic_message, finishCallback) {
+                    const add_time = Math.round((new Date()).getTime() / 1000);
+                    this.exeSql('DELETE FROM extension_debugger_history WHERE topic = ? and topic_message = ?;', [topic, topic_message], () => {
+                        this.exeSql('INSERT INTO  extension_debugger_history (topic, topic_message, add_time) VALUES (?, ?,?)', [topic, topic_message, add_time], () => {
+                            if (finishCallback) {
+                                finishCallback();
+                            }
+                        });
+                    });
+                },
+                initDb() {
+                    this.exeSql('CREATE TABLE IF NOT EXISTS extension_debugger_history (id integer primary key autoincrement, topic,topic_message,add_time int)');
+                },
+                exeSql(sql, values = [], result_callback, error_callback) {
+                    const db = this.getDb();
+                    const add_time = Math.round((new Date()).getTime() / 1000);
+                    db.transaction((tx) => {
+                        tx.executeSql(sql,
+                            values,
+                            (tx, result) => {
+                                if (result_callback) {
+                                    result_callback(result);
+                                }
+                            },
+                            (tx, error) => {
+                                if (error_callback) {
+                                    error_callback(error);
+                                }
+                            })
+                    });
+                },
+                getDb() {
+                    var db = openDatabase('yzb-extension-debugger', '1.0', 'record the yzb-extension-debugger info', 2 * 1024 * 1024);
+                    return db;
+                },
+                getCurrentDate(date, format = 'yyyy-MM-dd HH:mm:ss') {
+                    var pad = function (n) {
+                        return n < 10 ? `0${n}` : n.toString();
+                    };
+                    return format
+                        .replace('yyyy', date.getFullYear())
+                        .replace('MM', pad(date.getMonth() + 1))
+                        .replace('dd', pad(date.getDate()))
+                        .replace('HH', pad(date.getHours()))
+                        .replace('mm', pad(date.getMinutes()))
+                        .replace('ss', pad(date.getSeconds()));
+                },
+                ajax(url, postData) {
+                    return new Promise(function (resolve, reject) {
+                        var ajaxObj = new XMLHttpRequest();
+                        ajaxObj.open('POST', url, true);
+                        ajaxObj.setRequestHeader('Content-type', 'application/json');
+                        ajaxObj.timeout = 1000 * 5;
+                        ajaxObj.send(postData);
+                        ajaxObj.onreadystatechange = function () {
+                            if (ajaxObj.readyState === 4) {
+                                if (ajaxObj.status === 200) {
+                                    resolve(ajaxObj.response);
+                                } else {
+                                    reject();
+                                }
+                            }
+                        };
+                    });
+                },
+                emptyHistoryMessageList() {
+                    this.emptyHistory();
+                    this.historyItems = [];
+                },
+                setEditorJson(id) {
+                    this.getHistoryList((listData) => {
+                        let itemData = null;
+                        for (let index = 0; index < listData.length; index++) {
+                            const item = listData[index];
+                            if (item.id === id) {
+                                itemData = item;
+                                break;
+                            }
                         }
-                    },
-                    (tx, error) => {
-                        if (error_callback) {
-                            error_callback(error);
+                        if (itemData) {
+                            var input = document.getElementById("topic");
+                            input.value = itemData.topic;
+                            this.editor.set(JSON.parse(itemData.topic_message));
                         }
                     })
-            });
-        }
-
-        function initDb() {
-            exeSql('CREATE TABLE IF NOT EXISTS extension_debugger_history (id integer primary key autoincrement, topic,topic_message,add_time int)');
-        }
-
-        function insert(topic, topic_message, finishCallback) {
-            const add_time = Math.round((new Date()).getTime() / 1000);
-            exeSql('DELETE FROM extension_debugger_history WHERE topic = ? and topic_message = ?;', [topic, topic_message], () => {
-                exeSql('INSERT INTO  extension_debugger_history (topic, topic_message, add_time) VALUES (?, ?,?)', [topic, topic_message, add_time], () => {
-                    if (finishCallback) {
-                        finishCallback();
-                    }
-                });
-            });
-        }
-
-        function deleteHistory(id) {
-            exeSql(`DELETE FROM extension_debugger_history WHERE id =${id};`);
-        }
-        function emptyHistory() {
-            exeSql("DELETE FROM extension_debugger_history");
-        }
-
-        function getHistoryList(callback) {
-            exeSql("SELECT * FROM extension_debugger_history ORDER BY id DESC LIMIT 20", [], (result) => {
-                // !删除大于50条的内容
-                const max = 50;
-                if (result.rows.length > 1) {
-                    const lastItem = result.rows[0];
-                    const lastId = lastItem.id + 1 - max;
-                    if (lastId > 0) {
-                        exeSql(`DELETE FROM extension_debugger_history WHERE id < ${lastId};`);
+                },
+                deleteHistoryTopic(id) {
+                    this.deleteHistory(id);
+                    this.initSendHistoryList();
+                },
+                initSendHistoryList() {
+                    this.getHistoryList((listData) => {
+                        this.historyItems = listData;
+                    });
+                },
+                getEditorJson() {
+                    return JSON.stringify(this.editor.get());
+                },
+                submit() {
+                    var topic = document.getElementById('topic').value;
+                    var topicData = this.getEditorJson();
+                    if (!topic) {
+                        alert('请输入topic');
+                    } else if (!topicData) {
+                        alert('请输入请输入 topic message');
+                    } else {
+                        this.insert(topic, topicData, () => {
+                            this.initSendHistoryList();
+                        });
+                        // 存储历史记录
+                        var resultEle = document.getElementById('result');
+                        var timeEle = document.getElementById('time');
+                        resultEle.innerText = '';
+                        timeEle.innerText = '';
+                        this.ajax(topic, topicData).then((result) => {
+                            const resultObject = JSON.parse(result);
+                            var callbackType = resultObject.type;
+                            var callbackData = resultObject.data;
+                            console.log(`\u001b[1;35m ------- *${Date()}* ------- \u001b[0m`);
+                            console.log(`\u001b[1;31m * Recieve callback from node \u001b[0m`);
+                            console.log(`\u001b[1;32m * callback type: ${callbackType} \u001b[0m`);
+                            console.log(`\u001b[1;33m * callback data below: \u001b[0m`);
+                            console.log(callbackData);
+                            resultEle.innerText = "收到回调结果,请在调试控制台查看.";
+                            timeEle.innerText = this.getCurrentDate(new Date());
+                            // 存储历史记录
+                        }).catch(() => {
+                            resultEle.innerText = '错误，请查证后重试!';
+                        });
                     }
                 }
-                callback(result.rows);
-            });
+            }
+        })
+
+        const messages = {
+            en: {
+                message: {
+                    title: 'Yuanzhibang Simple Extension Debugger'
+                }
+            },
+            zh: {
+                message: {
+                    title: '猿之棒拓展简单调试工具'
+                }
+            },
+            "zh-TW": {
+                message: {
+                    title: '猿之棒拓展簡單調試工具'
+                }
+            }
         }
-        initDb();
-    </script>
+
+        // 2. Create i18n instance with options
+        const i18n = VueI18n.createI18n({
+            fallbackLocale: 'en', // set fallback locale
+            messages, // set locale messages
+        })
+        app.use(i18n)
+        app.mount('#app')
+        const supportLang = ['en', 'zh', 'zh-TW'];
+        let userLang = navigator.language;
+        if (!supportLang.includes(navigator.language)) {
+            const shortLang = navigator.language.split('-')[0];
+            userLang = shortLang;
+            const shortLangSupport = supportLang.includes(shortLang);
+            if (!shortLangSupport) {
+                userLang = 'en';
+            }
+        }
+        i18n.global.locale = userLang
+        document.title = i18n.global.t('message.title');
     </script>
 </body>
 
