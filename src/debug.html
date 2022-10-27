@@ -39,6 +39,11 @@
             font-size: 14px;
         }
 
+        .title-tip {
+            font-weight: lighter;
+            font-size: 10px;
+        }
+
         .header-content div,
         .content,
         .result-content {
@@ -244,6 +249,7 @@
             <div>
                 {{ $t("message.title") }}
                 <span class="version">v$version$</span>
+                <span class="title-tip"> ({{ $t("message.use_with_newest_chrome_or_edge")}})</span>
             </div>
         </div>
         <div class="content">
@@ -477,7 +483,8 @@
                     callback_error_tip: 'Extension execution error, extension topic is not listening for processing or error handling, please check and try again!',
                     callback_success_tip: 'Receive the callback result, please view it in the developer debug console.',
                     enter_topic_tip: 'Please enter Topic!',
-                    enter_topic_message: 'Please enter please enter Topic Message'
+                    enter_topic_message: 'Please enter please enter Topic Message',
+                    use_with_newest_chrome_or_edge: 'Please use the latest version of Chrome or Edge for debugging'
                 }
             },
             zh: {
@@ -492,7 +499,8 @@
                     callback_error_tip: '拓展执行错误,拓展端topic未监听处理或者处理出现错误,请查证后重试!',
                     callback_success_tip: '收到回调结果,请在调试控制台查看.',
                     enter_topic_tip: '请输入Topic!',
-                    enter_topic_message: '请输入请输入 topic message'
+                    enter_topic_message: '请输入请输入 topic message',
+                    use_with_newest_chrome_or_edge: '请使用最新版的Chrome或者Edge浏览器进行调试'
                 }
             },
             "zh-TW": {
@@ -507,7 +515,8 @@
                     callback_error_tip: '拓展執行錯誤,拓展端topic未監聽處理或者處理出現錯誤,請查證後重試!',
                     callback_success_tip: '收到回調結果,請在調試控制台查看.',
                     enter_topic_tip: '請輸入Topic!',
-                    enter_topic_message: '請輸入請輸入 topic message'
+                    enter_topic_message: '請輸入請輸入 topic message',
+                    use_with_newest_chrome_or_edge: '請使用最新版的Chrome或者Edge瀏覽器進行調試'
                 }
             }
         }
