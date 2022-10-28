@@ -282,6 +282,7 @@
                             <div class="tool">
                                 <span @click="setEditorJson(item.id)">{{ $t("message.fill") }}</span>
                                 <span @click="deleteHistoryTopic(item.id)">{{ $t("message.remove") }}</span>
+                                <span @click="copyTopicMessage(item.id)">{{ $t("message.copy") }}</span>
                             </div>
                         </div>
                         <div class="message-topic">Topic: {{item.topic}}</div>
@@ -320,9 +321,8 @@
             },
             methods: {
                 getHistoryList(callback) {
-                    this.exeSql("SELECT * FROM extension_debugger_history ORDER BY id DESC LIMIT 20", [], (result) => {
-                        // !删除大于50条的内容
-                        const max = 50;
+                    this.exeSql("SELECT * FROM extension_debugger_history ORDER BY id DESC LIMIT 100", [], (result) => {
+                        const max = 100;
                         if (result.rows.length > 1) {
                             const lastItem = result.rows[0];
                             const lastId = lastItem.id + 1 - max;
@@ -338,6 +338,16 @@
                 },
                 deleteHistory(id) {
                     this.exeSql(`DELETE FROM extension_debugger_history WHERE id =${id};`);
+                },
+                getHistoryItemDetail(id, callback) {
+                    this.exeSql(`SELECT * FROM extension_debugger_history WHERE id =${id};`, [], (result) => {
+                        var raws = result.rows;
+                        if (raws.length > 0) {
+                            callback(result.rows[0]);
+                        } else {
+                            callback(null);
+                        }
+                    });
                 },
                 insert(topic, topic_message, finishCallback) {
                     const add_time = Math.round((new Date()).getTime() / 1000);
@@ -429,6 +439,22 @@
                     this.deleteHistory(id);
                     this.initSendHistoryList();
                 },
+                copyTopicMessage(id) {
+                    this.getHistoryItemDetail(id, (info) => {
+                        delete info.add_time;
+                        delete info.id;
+                        info.topic_message = JSON.parse(info.topic_message);
+                        const input = document.createElement('input');
+                        document.body.appendChild(input);
+                        input.setAttribute('value', JSON.stringify(info));
+                        input.select();
+                        if (document.execCommand('copy')) {
+                            document.execCommand('copy');
+                            alert(i18n.global.t('message.copy_successfully'));
+                        }
+                        document.body.removeChild(input);
+                    });
+                },
                 initSendHistoryList() {
                     this.getHistoryList((listData) => {
                         this.historyItems = listData;
@@ -481,6 +507,7 @@
                     history: 'History',
                     empty: 'Clear',
                     remove: 'Remove',
+                    copy: 'Copy',
                     fill: 'Fill',
                     submit: 'Submit',
                     callback_title: 'Result',
@@ -488,7 +515,8 @@
                     callback_success_tip: 'Receive the callback result, please view it in the developer debug console.',
                     enter_topic_tip: 'Please enter Topic!',
                     enter_topic_message: 'Please enter please enter Topic Message',
-                    use_with_newest_chrome_or_edge: 'Please use the latest version of Chrome or Edge for debugging'
+                    use_with_newest_chrome_or_edge: 'Please use the latest version of Chrome or Edge for debugging',
+                    copy_successfully: "Copy successfully!"
                 }
             },
             zh: {
@@ -497,6 +525,7 @@
                     history: '历史记录',
                     empty: '清空',
                     remove: '移除',
+                    copy: '复制',
                     fill: '填充',
                     submit: '提交',
                     callback_title: '返回结果内容如下',
@@ -504,7 +533,8 @@
                     callback_success_tip: '收到回调结果,请在调试控制台查看.',
                     enter_topic_tip: '请输入Topic!',
                     enter_topic_message: '请输入请输入 topic message',
-                    use_with_newest_chrome_or_edge: '请使用最新版的Chrome或者Edge浏览器进行调试'
+                    use_with_newest_chrome_or_edge: '请使用最新版的Chrome或者Edge浏览器进行调试',
+                    copy_successfully: "复制成功!"
                 }
             },
             "zh-TW": {
@@ -513,6 +543,7 @@
                     history: '歷史記錄',
                     empty: '清空',
                     remove: '移除',
+                    copy: '拷貝',
                     fill: '填充',
                     submit: '提交',
                     callback_title: '返回結果內容如下',
@@ -520,7 +551,8 @@
                     callback_success_tip: '收到回調結果,請在調試控制台查看.',
                     enter_topic_tip: '請輸入Topic!',
                     enter_topic_message: '請輸入請輸入 topic message',
-                    use_with_newest_chrome_or_edge: '請使用最新版的Chrome或者Edge瀏覽器進行調試'
+                    use_with_newest_chrome_or_edge: '請使用最新版的Chrome或者Edge瀏覽器進行調試',
+                    copy_successfully: "拷貝成功！"
                 }
             }
         }
