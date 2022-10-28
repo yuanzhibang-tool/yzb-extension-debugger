@@ -174,9 +174,9 @@
         }
 
         #time {
-            position: absolute;
-            right: 10px;
-            top: 10px;
+            float: right;
+            width: auto;
+            height: auto;
         }
 
         #jsoneditor {
@@ -258,10 +258,13 @@
                 <div id="jsoneditor"></div>
                 <button id="submit-button" @click="submit();">{{ $t("message.submit") }}</button>
                 <div class="result-content">
-                    <div class="box-header">{{ $t("message.callback_title") }}:</div>
+                    <div class="box-header">
+                        {{ $t("message.callback_title") }}:
+                        <div id="time">
+                        </div>
+                    </div>
                     <div class="box">
                         <div id="result"></div>
-                        <div id="time"></div>
                     </div>
                 </div>
             </div>
@@ -463,6 +466,7 @@
                             timeEle.innerText = this.getCurrentDate(new Date());
                             // 存储历史记录
                         }).catch(() => {
+                            timeEle.innerText = this.getCurrentDate(new Date());
                             resultEle.innerText = i18n.global.t('message.callback_error_tip');
                         });
                     }
