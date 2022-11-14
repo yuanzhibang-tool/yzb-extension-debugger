@@ -1,6 +1,5 @@
 import { ChildProcess } from 'child_process';
 import { ExtensionLifecycleEventMessageTopic, ExtensionRendererMessageTopic } from '@yuanzhibang/common';
-import { buffer } from 'stream/consumers';
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
