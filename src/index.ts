@@ -4,9 +4,9 @@ const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const version = require('../package.json').version;
-var WebSocket = require('ws');
+const WebSocket = require('ws');
 const express = require('express');
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 
 /**
  * 调试器日志打印类
@@ -153,7 +153,7 @@ export class Debugger {
 
   abortController: AbortController | null = null;
 
-  exeName: string = "";
+  exeName = '';
 
   socketClient: any;
   /**
@@ -165,8 +165,8 @@ export class Debugger {
     DebuggerLogger.withLog = withLog;
   }
 
-  setExtensionPath(path: string) {
-    this.extensionPath = path;
+  setExtensionPath(extensionPath: string) {
+    this.extensionPath = extensionPath;
   }
   /**
    * 设置模拟渲染端topic消息回调
@@ -307,14 +307,14 @@ export class Debugger {
         const messageString = msg.toString('utf8');
         const message = JSON.parse(messageString);
         switch (message.nativeName) {
-          case "run":
+          case 'run':
             this.checkExtensionIsRunning(message.identity);
             // 先发送回调消息
             this.wsSendToRenderer(message.identity, 'next', null);
             // 运行
             this.runExtension(null, message.data);
             break;
-          case "stop":
+          case 'stop':
             // 停止
             this.wsSendToRenderer(message.identity, 'next', null);
             if (!this.isExtensionRunning()) {
@@ -325,7 +325,7 @@ export class Debugger {
             } catch (error) {
             }
             break;
-          case "getProcessInfo":
+          case 'getProcessInfo':
             const processInfo = {};
             if (this.isExtensionRunning()) {
               processInfo[this.exeName] = {
@@ -334,7 +334,7 @@ export class Debugger {
             }
             this.wsSendToRenderer(message.identity, 'next', processInfo);
             break;
-          case "sendProcessMessage":
+          case 'sendProcessMessage':
             this.sendPromise(message.data.message.topic, message.data.message.message).then((data) => {
               this.wsSendToRenderer(message.identity, 'next', data);
             }
@@ -455,7 +455,7 @@ export class Debugger {
     DebuggerLogger.echoMessageDeliver();
     const app = express();
     app.use(bodyParser.json());
-    app.get('/', function (req, res) {
+    app.get('/', (req, res) => {
       let viewPath = path.resolve(__dirname, '../view/debug.html');
       if (htmlPath) {
         if (htmlPath.startsWith('/')) {
@@ -502,10 +502,10 @@ export class Debugger {
    * @param extensionPath js或者ts的入口文件地址,null为了便于进行单元测试
    */
   runExtension(extensionPath: string | null = null, extensionParams: any = {}): void {
-    this.exeName = extensionParams['name'];
+    this.exeName = extensionParams.name;
     if (extensionPath) {
       this.extensionPath = extensionPath;
-    };
+    }
     let args = extensionParams.args;
     let passEnv: any = extensionParams.env;
     if (!args) {
@@ -514,7 +514,7 @@ export class Debugger {
     if (!passEnv) {
       passEnv = {};
     }
-    const appDir = "./";
+    const appDir = './';
     passEnv.HOME = appDir;
     // 设置app_id和app_dir目录
     passEnv.APP_ID = extensionParams.app_id;
@@ -538,7 +538,7 @@ export class Debugger {
         this.extensionProcess = fork(this.extensionPath, args, {
           env,
           signal,
-          timeout: timeout,
+          timeout,
           stdio: 'pipe',
           cwd: appDir,
         });
@@ -546,7 +546,7 @@ export class Debugger {
         this.extensionProcess = fork(this.extensionPath, args, {
           env,
           signal,
-          timeout: timeout,
+          timeout,
           stdio: 'pipe',
           cwd: appDir,
         });
