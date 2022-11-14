@@ -1,5 +1,5 @@
-import { ipc } from "@yuanzhibang/node";
-// 测试用的模拟extension 
+import { ipc } from '@yuanzhibang/node';
+// 测试用的模拟extension
 
 const willInitData = {
     type: 'willInitData'

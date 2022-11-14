@@ -1,5 +1,6 @@
 import { ChildProcess } from 'child_process';
 import { ExtensionLifecycleEventMessageTopic, ExtensionRendererMessageTopic } from '@yuanzhibang/common';
+import { buffer } from 'stream/consumers';
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -8,6 +9,10 @@ const WebSocket = require('ws');
 const express = require('express');
 const bodyParser = require('body-parser');
 
+export enum DebuggerServerType {
+  WS,
+  HTTP
+}
 /**
  * 调试器日志打印类
  */
@@ -19,6 +24,15 @@ export class DebuggerLogger {
   static withLog = true;
 
 
+  static echoWarning(message: any) {
+    console.log(`\u001b[1;33m${message} \u001b[0m`);
+  }
+  static echoError(message: any) {
+    console.log(`\u001b[1;31m${message} \u001b[0m`);
+  }
+  static echoInfo(message: any) {
+    console.log(`\u001b[1;32m${message} \u001b[0m`);
+  }
   /**
    * 设置打印开关
    * @param [withLog] 是否打印日志,默认为true
@@ -110,6 +124,7 @@ export class DebuggerLogger {
  */
 export class Debugger {
 
+  debuggerServerType: DebuggerServerType | null = null;
   /**
    * 内部变量无需关注,next/then结果回调保存map
    */
@@ -297,6 +312,7 @@ export class Debugger {
    * @param [port] 启动的ws端口号默认使用8889
    */
   startWsServer(port: number = 8889): void {
+    this.debuggerServerType = DebuggerServerType.WS;
     const wsServer = new WebSocket.Server({ host: '0.0.0.0', port }, () => {
       DebuggerLogger.log('debug ws server started');
     });
@@ -444,6 +460,7 @@ export class Debugger {
    * @param [htmlPath] 无需关注,开发本项目使用,用来调试的html网页
    */
   startServer(port: number = 8888, htmlPath: string | null = null): void {
+    this.debuggerServerType = DebuggerServerType.HTTP;
     DebuggerLogger.echoMessageDeliver();
     DebuggerLogger.echoMessageInfoTitle('Debug server start successfully!');
     DebuggerLogger.echoMessageInfoTitle('server info below');
@@ -557,6 +574,7 @@ export class Debugger {
         data = Buffer.from(data, 'utf-8');
       }
       const bufferArray = data.toJSON().data;
+      DebuggerLogger.echoError(data.toString());
       this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_STDERR, bufferArray);
     });
 
@@ -566,6 +584,7 @@ export class Debugger {
         data = Buffer.from(data, 'utf-8');
       }
       const bufferArray = data.toJSON().data;
+      DebuggerLogger.echoInfo(data.toString());
       this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_STDOUT, bufferArray);
     });
 
@@ -574,8 +593,13 @@ export class Debugger {
     });
     this.extensionProcess?.on('exit', (code) => {
       this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_EXIT, code);
+      DebuggerLogger.echoWarning(`The extension process has exited with code ${code}!`);
+      if (this.debuggerServerType === DebuggerServerType.HTTP) {
+        process.exit();
+      }
     });
     this.extensionProcess?.on('error', (error) => {
+      DebuggerLogger.echoError(error);
       this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_ERROR, error);
     });
     this.extensionProcess?.on('message', (message: any) => {
