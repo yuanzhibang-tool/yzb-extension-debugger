@@ -24,7 +24,6 @@
     "@types/jest": "^27.5.1",
     "@types/node": "^17.0.33",
     "@yuanzhibang/cli": "^0.0.20",
-    "@yuanzhibang/common": "^0.0.6",
     "@yuanzhibang/node": "^0.0.45",
     "ts-jest": "^28.0.2",
     "ts-lint": "^4.5.1",
@@ -38,6 +37,7 @@
     }
   },
   "dependencies": {
+    "@yuanzhibang/common": "^0.0.12",
     "body-parser": "^1.20.0",
     "express": "^4.18.1",
     "ts-node": "^10.7.0",

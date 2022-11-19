@@ -1,5 +1,5 @@
 import { ChildProcess } from 'child_process';
-import { ExtensionLifecycleEventMessageTopic, ExtensionRendererMessageTopic } from '@yuanzhibang/common';
+import { ExtensionLifecycleEventMessageTopic, ExtensionRendererMessageTopic, IpcMessageTopic } from '@yuanzhibang/common';
 const { fork } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -241,6 +241,7 @@ export class Debugger {
    */
   // tslint:disable-next-line: max-line-length
   send(topic: string, topicMessage: any, nextCallback: (result: any) => void, errorCallbck: (error: any) => void, completeCallback: () => void): void {
+    IpcMessageTopic.checkValid(topic);
     const message = this.getTopicProcessMessage(topic, topicMessage);
     this.sendMessageToProcess(message).then((result: any) => {
       if (nextCallback) {
@@ -264,6 +265,7 @@ export class Debugger {
    * @returns 返回发送消息的promise
    */
   sendPromise(topic: string, topicMessage: any): Promise<any> {
+    IpcMessageTopic.checkValid(topic);
     const message = this.getTopicProcessMessage(topic, topicMessage);
     return this.sendMessageToProcess(message);
   }
