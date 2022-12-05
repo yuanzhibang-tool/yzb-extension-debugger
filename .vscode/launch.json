@@ -17,6 +17,7 @@
         "${workspaceFolder}/debug/debug.ts"
       ],
       "sourceMaps": true,
+      "autoAttachChildProcesses": true,
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
