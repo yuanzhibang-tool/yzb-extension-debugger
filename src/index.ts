@@ -152,7 +152,7 @@ export class Debugger {
   /**
    * 内部变量无需关注,模拟渲染端topic消息回调
    */
-  rendererTopicMessageCallback: ((topic: string, message: any) => void) | null = null;
+  rendererTopicMessageCallback: ((topic: string, message: any, extra: any) => void) | null = null;
 
   /**
    * 内部变量无需关注,模拟渲染端除了topic消息以外的其他消息回调
@@ -430,10 +430,11 @@ export class Debugger {
    * @param topic 对应的消息主题
    * @param message  对应的消息体
    */
-  wsSendRendererTopicMessage(topic: string, message: any) {
+  wsSendRendererTopicMessage(topic: string, message: any, extra: any) {
     this.wsSendRendererMessage('yzb_ipc_renderer_message', {
       topic,
-      message
+      message,
+      extra
     });
   }
 
@@ -678,9 +679,9 @@ export class Debugger {
             DebuggerLogger.log(message.message);
             DebuggerLogger.echoMessageDeliver();
             if (this.rendererTopicMessageCallback) {
-              this.rendererTopicMessageCallback(message.topic, message.message);
+              this.rendererTopicMessageCallback(message.topic, message.message, message.extra);
             }
-            this.wsSendRendererTopicMessage(message.topic, message.message);
+            this.wsSendRendererTopicMessage(message.topic, message.message, message.extra);
           } else {
             DebuggerLogger.echoRendererOtherMessage(message);
             if (this.rendererOtherMessageCallback) {
