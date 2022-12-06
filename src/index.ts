@@ -547,7 +547,7 @@ export class Debugger {
     this.abortController = new AbortController();
     const { signal } = this.abortController;
 
-    this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_START, null);
+    this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_START, null, null);
 
     if (this.extensionPath) {
       // 支持ts,判断后缀
@@ -577,7 +577,7 @@ export class Debugger {
       }
       const bufferArray = data.toJSON().data;
       DebuggerLogger.echoError(data.toString());
-      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_STDERR, bufferArray);
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_STDERR, bufferArray, null);
     });
 
     this.extensionProcess?.stdout?.on('data', (data: Buffer) => {
@@ -587,14 +587,14 @@ export class Debugger {
       }
       const bufferArray = data.toJSON().data;
       DebuggerLogger.echoInfo(data.toString());
-      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_STDOUT, bufferArray);
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_STDOUT, bufferArray, null);
     });
 
     this.extensionProcess?.on('close', (code) => {
-      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_CLOSE, code);
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_CLOSE, code, null);
     });
     this.extensionProcess?.on('exit', (code) => {
-      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_EXIT, code);
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_EXIT, code, null);
       DebuggerLogger.echoWarning(`The extension process has exited with code ${code}!`);
       if (this.debuggerServerType === DebuggerServerType.HTTP) {
         process.exit();
@@ -602,7 +602,7 @@ export class Debugger {
     });
     this.extensionProcess?.on('error', (error) => {
       DebuggerLogger.echoError(error);
-      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_ERROR, error);
+      this.wsSendRendererTopicMessage(ExtensionLifecycleEventMessageTopic.ON_ERROR, error, null);
     });
     this.extensionProcess?.on('message', (message: any) => {
       if (message !== null && typeof message === 'object') {
