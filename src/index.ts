@@ -538,6 +538,8 @@ export class Debugger {
     // 设置app_id和app_dir目录
     passEnv.APP_ID = extensionParams.app_id;
     passEnv.APP_DIR = appDir;
+    passEnv.PROCESS_MESSAGE_TMP_DIR = './.process_message_tmp_dir';
+
     const env = { ...process.env, ...passEnv };
 
     let timeout = null;
@@ -673,6 +675,7 @@ export class Debugger {
             const consoleData = {
               type: 'topic message to renderer',
               topic: message.topic,
+              extra: message.extra
             };
             DebuggerLogger.table(consoleData);
             DebuggerLogger.echoMessageDataTitle('topic data below');
